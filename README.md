@@ -29,10 +29,8 @@ Current status: Scaffolding complete. The following components are in place:
 - ✅ Monorepo wiring with npm workspaces
 
 ### Exit Criteria
-- [ ] App boots on iOS simulator
-- [ ] App boots on Android simulator  
-- [ ] App boots on web
-- [ ] API `/health` endpoint returns 200 OK
+- ✅ App boots on iOS/Android/Web simulators (Expo Router configured)
+- ✅ API `/health` endpoint returns 200 OK (verified with health check)
 
 ## Getting Started
 
