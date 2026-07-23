@@ -49,6 +49,9 @@ export const API_ENDPOINTS = {
 
   // Assistant
   ASSISTANT_REFINE: '/assistant/refine',
+
+  // Sync
+  SYNC_REPLAY: '/sync/replay',
 };
 
 export const PROCESSING_MODE_LABELS = {

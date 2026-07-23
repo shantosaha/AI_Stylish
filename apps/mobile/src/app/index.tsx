@@ -17,6 +17,7 @@ import * as storage from '@/lib/storage';
 import { useAuthStore } from '@/state/auth-store';
 import { useContextStore } from '@/state/context-store';
 import { useRecommendationStore } from '@/state/recommendation-store';
+import { useSyncQueueStore } from '@/state/sync-queue-store';
 import { useWardrobeStore } from '@/state/wardrobe-store';
 
 const LAST_LOCATION_KEY = 'ai_stylish_last_location';
@@ -30,17 +31,28 @@ export default function HomeScreen() {
   const items = useWardrobeStore((s) => s.items);
   const isLoadingWardrobe = useWardrobeStore((s) => s.isLoading);
   const fetchItems = useWardrobeStore((s) => s.fetchItems);
+  const wardrobeHydrateFromCache = useWardrobeStore((s) => s.hydrateFromCache);
+  const isWardrobeFromCache = useWardrobeStore((s) => s.isFromCache);
+  const isWardrobeOffline = useWardrobeStore((s) => s.isOffline);
 
   const { snapshot, isFromCache, isOffline, hydrateFromCache, fetchToday } = useContextStore();
   const {
     run,
     isLoading: isLoadingRecommendation,
     isSubmittingFeedback,
+    isFromCache: isRecommendationFromCache,
+    isOffline: isRecommendationOffline,
     error: recommendationError,
+    hydrateFromCache: hydrateRecommendationFromCache,
     generateToday,
     submitFeedback,
     setRun,
   } = useRecommendationStore();
+
+  const pendingSyncCount = useSyncQueueStore((s) => s.queue.length);
+  const syncConflicts = useSyncQueueStore((s) => s.conflicts);
+  const flushSyncQueue = useSyncQueueStore((s) => s.flush);
+  const clearSyncConflicts = useSyncQueueStore((s) => s.clearConflicts);
 
   const [showContextManager, setShowContextManager] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -70,8 +82,13 @@ export default function HomeScreen() {
   const canRecommend = hasTop && hasBottom && hasShoes;
 
   useEffect(() => {
-    if (token) fetchItems(token);
-  }, [token, fetchItems]);
+    if (!token) return;
+    (async () => {
+      await wardrobeHydrateFromCache();
+      await fetchItems(token);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -85,6 +102,11 @@ export default function HomeScreen() {
         fetchToday(token);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  useEffect(() => {
+    if (token) hydrateRecommendationFromCache();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
@@ -169,6 +191,32 @@ export default function HomeScreen() {
             {name ? `Hey, ${name}` : 'Welcome'}
           </ThemedText>
 
+          {pendingSyncCount > 0 ? (
+            <ThemedView type="backgroundElement" style={styles.card} testID="sync-pending-banner">
+              <ThemedText type="small" style={styles.cacheBadge}>
+                {pendingSyncCount} change{pendingSyncCount === 1 ? '' : 's'} queued — will sync automatically
+              </ThemedText>
+              <Pressable
+                onPress={() => token && flushSyncQueue(token)}
+                testID="sync-now">
+                <ThemedText type="linkPrimary">Sync now</ThemedText>
+              </Pressable>
+            </ThemedView>
+          ) : null}
+
+          {syncConflicts.length > 0 ? (
+            <ThemedView type="backgroundElement" style={styles.card} testID="sync-conflicts-banner">
+              {syncConflicts.map((c) => (
+                <ThemedText key={c.objectId} type="small" style={styles.offlineBadge}>
+                  {c.detail}
+                </ThemedText>
+              ))}
+              <Pressable onPress={clearSyncConflicts} testID="sync-conflicts-dismiss">
+                <ThemedText type="linkPrimary">Dismiss</ThemedText>
+              </Pressable>
+            </ThemedView>
+          ) : null}
+
           {!canRecommend ? (
             <Pressable onPress={() => router.push('/wardrobe')} testID="home-recommendation-empty">
               <ThemedView type="backgroundElement" style={styles.card}>
@@ -196,8 +244,22 @@ export default function HomeScreen() {
                 <ThemedText type="linkPrimary">Try again</ThemedText>
               </Pressable>
             </ThemedView>
+          ) : isRecommendationOffline && !run ? (
+            <ThemedView type="backgroundElement" style={styles.card} testID="home-recommendation-offline-empty">
+              <ThemedText type="small" style={styles.offlineBadge}>
+                Offline — no cached recommendation yet
+              </ThemedText>
+            </ThemedView>
           ) : run ? (
             <>
+              {isRecommendationOffline || isRecommendationFromCache ? (
+                <ThemedText
+                  type="small"
+                  style={isRecommendationOffline ? styles.offlineBadge : styles.cacheBadge}
+                  testID="recommendation-cache-badge">
+                  {isRecommendationOffline ? 'Offline — showing saved recommendation' : 'Showing cached recommendation'}
+                </ThemedText>
+              ) : null}
               <OutfitCard
                 label="Today's pick"
                 outfit={run.main_outfit}
@@ -274,6 +336,14 @@ export default function HomeScreen() {
 
           <Pressable onPress={() => router.push('/wardrobe')} testID="home-wardrobe-link">
             <ThemedView type="backgroundElement" style={styles.card}>
+              {isWardrobeOffline || isWardrobeFromCache ? (
+                <ThemedText
+                  type="small"
+                  style={isWardrobeOffline ? styles.offlineBadge : styles.cacheBadge}
+                  testID="wardrobe-cache-badge">
+                  {isWardrobeOffline ? 'Offline — showing saved data' : 'Showing cached data'}
+                </ThemedText>
+              ) : null}
               <ThemedText type="default" themeColor="textSecondary">
                 {items.length > 0
                   ? `${items.length} item${items.length === 1 ? '' : 's'} in your wardrobe. Tap to manage.`

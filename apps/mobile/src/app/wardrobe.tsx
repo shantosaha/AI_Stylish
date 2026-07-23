@@ -18,13 +18,21 @@ export default function WardrobeScreen() {
   const items = useWardrobeStore((s) => s.items);
   const isLoading = useWardrobeStore((s) => s.isLoading);
   const error = useWardrobeStore((s) => s.error);
+  const isFromCache = useWardrobeStore((s) => s.isFromCache);
+  const isOffline = useWardrobeStore((s) => s.isOffline);
   const fetchItems = useWardrobeStore((s) => s.fetchItems);
+  const hydrateFromCache = useWardrobeStore((s) => s.hydrateFromCache);
 
   const [mode, setMode] = useState<Mode>({ type: 'list' });
 
   useEffect(() => {
-    if (token) fetchItems(token);
-  }, [token, fetchItems]);
+    if (!token) return;
+    (async () => {
+      await hydrateFromCache();
+      await fetchItems(token);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const refresh = () => {
     if (token) fetchItems(token);
@@ -52,8 +60,10 @@ export default function WardrobeScreen() {
         ) : (
           <WardrobeList
             items={items}
-            isLoading={isLoading}
+            isLoading={isLoading && items.length === 0}
             error={error}
+            isFromCache={isFromCache}
+            isOffline={isOffline}
             onRetry={refresh}
             onAddPress={() => setMode({ type: 'add' })}
             onItemPress={(item) => setMode({ type: 'detail', item })}

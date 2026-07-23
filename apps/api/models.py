@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -239,3 +239,19 @@ class OutfitHistory(Base):
     # detect "this exact combo was worn/liked recently" for repeat-avoidance scoring.
     repeat_group_hash = Column(String(64), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SyncQueue(Base):
+    __tablename__ = "sync_queue"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    object_type = Column(String(50), nullable=False)  # wardrobe_item, outfit_feedback
+    object_id = Column(String(36), nullable=False)
+    action = Column(String(50), nullable=False)  # update, create
+    payload_json = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration
+    status = Column(String(50), default="queued")  # queued, running, done, failed
+    retry_count = Column(Integer, default=0)
+    last_error = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

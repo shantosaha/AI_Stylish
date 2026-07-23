@@ -201,17 +201,23 @@ CREATE TABLE preview_assets (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Sync queue for offline changes
+-- Sync queue for offline changes (Phase 8). Field names/enum match
+-- documents/04's canonical DDL exactly (object_type/object_id/action/
+-- payload_json/status/retry_count/last_error) - this table was a Phase-0
+-- stub with drifted names (entity_type/entity_id/operation/is_synced/
+-- synced_at) until Phase 8 actually built the replay endpoint against it.
 CREATE TABLE sync_queue (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  entity_type VARCHAR(50) NOT NULL,
-  entity_id UUID NOT NULL,
-  operation VARCHAR(50) NOT NULL, -- create, update, delete
-  payload JSONB NOT NULL,
-  is_synced BOOLEAN DEFAULT FALSE,
+  object_type VARCHAR(50) NOT NULL, -- wardrobe_item, outfit_feedback
+  object_id UUID NOT NULL,
+  action VARCHAR(50) NOT NULL, -- update, create
+  payload_json JSONB NOT NULL DEFAULT '{}',
+  status VARCHAR(50) NOT NULL DEFAULT 'queued', -- queued, running, done, failed
+  retry_count INTEGER NOT NULL DEFAULT 0,
+  last_error TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  synced_at TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for common queries
@@ -221,4 +227,4 @@ CREATE INDEX idx_body_analysis_results_user ON body_analysis_results(user_id);
 CREATE INDEX idx_outfit_history_user ON outfit_history(user_id);
 CREATE INDEX idx_preview_assets_outfit ON preview_assets(outfit_id);
 CREATE INDEX idx_sync_queue_user ON sync_queue(user_id);
-CREATE INDEX idx_sync_queue_synced ON sync_queue(is_synced);
+CREATE INDEX idx_sync_queue_status ON sync_queue(status);

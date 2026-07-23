@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ItemForm, ItemFormValues } from '@/components/wardrobe/item-form';
 import { Spacing } from '@/constants/theme';
 import { useAuthStore } from '@/state/auth-store';
+import { useSyncQueueStore } from '@/state/sync-queue-store';
 import { useWardrobeStore } from '@/state/wardrobe-store';
 
 function itemToFormValues(item: WardrobeItem): ItemFormValues {
@@ -30,7 +31,7 @@ export function ItemDetailScreen({ item, onBack }: { item: WardrobeItem; onBack:
   const [form, setForm] = useState<ItemFormValues>(itemToFormValues(item));
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [savedNotice, setSavedNotice] = useState(false);
+  const [savedNotice, setSavedNotice] = useState<'saved' | 'queued' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const primaryImage = item.images.find((img) => img.is_primary) ?? item.images[0];
@@ -41,8 +42,11 @@ export function ItemDetailScreen({ item, onBack }: { item: WardrobeItem; onBack:
     setError(null);
     try {
       await updateItem(token, item.id, { ...form, formality: form.formality || undefined });
-      setSavedNotice(true);
-      setTimeout(() => setSavedNotice(false), 1500);
+      const wasQueued = useSyncQueueStore
+        .getState()
+        .queue.some((q) => q.object_type === 'wardrobe_item' && q.object_id === item.id);
+      setSavedNotice(wasQueued ? 'queued' : 'saved');
+      setTimeout(() => setSavedNotice(null), wasQueued ? 3000 : 1500);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save changes');
     } finally {
@@ -74,9 +78,13 @@ export function ItemDetailScreen({ item, onBack }: { item: WardrobeItem; onBack:
 
       <ItemForm values={form} onChange={setForm} disabled={isSaving || isDeleting} />
 
-      {savedNotice ? (
-        <ThemedText type="small" themeColor="textSecondary">
+      {savedNotice === 'saved' ? (
+        <ThemedText type="small" themeColor="textSecondary" testID="item-detail-saved">
           Saved
+        </ThemedText>
+      ) : savedNotice === 'queued' ? (
+        <ThemedText type="small" style={styles.queuedNotice} testID="item-detail-queued">
+          Saved offline — will sync when back online
         </ThemedText>
       ) : null}
       {error ? (
@@ -154,5 +162,8 @@ const styles = StyleSheet.create({
   },
   error: {
     color: '#ef4444',
+  },
+  queuedNotice: {
+    color: '#f59e0b',
   },
 });

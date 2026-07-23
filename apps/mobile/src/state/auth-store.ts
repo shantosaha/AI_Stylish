@@ -2,16 +2,18 @@ import { API_ENDPOINTS } from '@ai-stylish/shared';
 import type { AuthResponse, UpdateProfileRequest, UserProfile } from '@ai-stylish/shared';
 import { create } from 'zustand';
 
-import { apiClient } from '@/api/client';
+import { ApiError, apiClient } from '@/api/client';
 import * as storage from '@/lib/storage';
 
 const TOKEN_KEY = 'ai_stylish_token';
+const PROFILE_CACHE_KEY = 'ai_stylish_profile_cache';
 
 interface AuthState {
   token: string | null;
   profile: UserProfile | null;
   isHydrated: boolean;
   isLoading: boolean;
+  isOffline: boolean;
   error: string | null;
   hydrate: () => Promise<void>;
   signup: (email: string, password: string) => Promise<void>;
@@ -30,6 +32,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   profile: null,
   isHydrated: false,
   isLoading: false,
+  isOffline: false,
   error: null,
 
   hydrate: async () => {
@@ -40,8 +43,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     try {
       const profile = await fetchProfile(token);
-      set({ token, profile, isHydrated: true });
-    } catch {
+      set({ token, profile, isHydrated: true, isOffline: false });
+      await storage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
+    } catch (e) {
+      // A real auth failure (expired/invalid token) should log the user
+      // out. A network failure should not - airplane-mode session resume
+      // needs the cached token/profile to keep working, not sign out.
+      if (e instanceof ApiError && e.status === 0) {
+        const cached = await storage.getItem(PROFILE_CACHE_KEY);
+        if (cached) {
+          try {
+            set({ token, profile: JSON.parse(cached) as UserProfile, isHydrated: true, isOffline: true });
+            return;
+          } catch {
+            // corrupt cache entry, fall through to logout below
+          }
+        }
+      }
       await storage.deleteItem(TOKEN_KEY);
       set({ token: null, profile: null, isHydrated: true });
     }
@@ -54,6 +72,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await storage.setItem(TOKEN_KEY, res.access_token);
       const profile = await fetchProfile(res.access_token);
       set({ token: res.access_token, profile, isLoading: false });
+      await storage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
     } catch (e) {
       set({ isLoading: false, error: e instanceof Error ? e.message : 'Signup failed' });
       throw e;
@@ -67,6 +86,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await storage.setItem(TOKEN_KEY, res.access_token);
       const profile = await fetchProfile(res.access_token);
       set({ token: res.access_token, profile, isLoading: false });
+      await storage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
     } catch (e) {
       set({ isLoading: false, error: e instanceof Error ? e.message : 'Login failed' });
       throw e;
@@ -75,6 +95,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     await storage.deleteItem(TOKEN_KEY);
+    await storage.deleteItem(PROFILE_CACHE_KEY);
     set({ token: null, profile: null });
   },
 
@@ -85,6 +106,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const profile = await apiClient.put<UserProfile>(API_ENDPOINTS.PROFILE_UPDATE, payload, token);
       set({ profile, isLoading: false });
+      await storage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
     } catch (e) {
       set({ isLoading: false, error: e instanceof Error ? e.message : 'Update failed' });
       throw e;

@@ -15,6 +15,7 @@ from routers import (
     profile,
     recommendations,
     routines,
+    sync,
     wardrobe,
 )
 from storage import MEDIA_ROOT
@@ -48,6 +49,7 @@ app.include_router(recommendations.router)
 app.include_router(preview.router)
 app.include_router(history.router)
 app.include_router(assistant.router)
+app.include_router(sync.router)
 
 app.mount("/media", StaticFiles(directory=MEDIA_ROOT), name="media")
 

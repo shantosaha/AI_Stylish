@@ -254,6 +254,33 @@ export interface AssistantRefineResponse {
   run: RecommendationRun | null;
 }
 
+// Sync DTOs (Phase 8 offline hardening)
+export type SyncObjectType = 'wardrobe_item' | 'outfit_feedback';
+export type SyncAction = 'update' | 'create';
+export type SyncStatus = 'queued' | 'running' | 'done' | 'failed';
+
+export interface SyncItem {
+  object_type: SyncObjectType;
+  object_id: string;
+  action: SyncAction;
+  payload: Record<string, unknown>;
+  client_queued_at: string;
+}
+
+export interface SyncReplayRequest {
+  items: SyncItem[];
+}
+
+export interface SyncItemResult {
+  object_id: string;
+  status: SyncStatus;
+  detail?: string | null;
+}
+
+export interface SyncReplayResponse {
+  results: SyncItemResult[];
+}
+
 // Request DTOs
 export interface SignupRequest {
   email: string;

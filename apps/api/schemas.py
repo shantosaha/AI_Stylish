@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 ProcessingMode = Literal["auto", "local_preferred", "cloud_preferred"]
 WardrobeCategory = Literal[
@@ -9,6 +9,19 @@ WardrobeCategory = Literal[
 ]
 Formality = Literal["casual", "business", "formal"]
 TonePreference = Literal["practical", "direct", "encouraging"]
+
+
+def _naive_utc(value: datetime | None) -> datetime | None:
+    """Every timestamp elsewhere in this codebase is naive UTC
+    (datetime.utcnow()). The mobile client sends JS Date().toISOString(),
+    which is always timezone-aware ("Z"-suffixed) - left un-normalized,
+    Python raises TypeError comparing it against a naive value anywhere
+    downstream (e.g. sync conflict detection), or it silently corrupts
+    string-based SQLite comparisons (e.g. the repeat-avoidance window
+    query)."""
+    if value is None or value.tzinfo is None:
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 class SignupRequest(BaseModel):
@@ -167,6 +180,9 @@ class CalendarEventSyncItem(BaseModel):
     end_ts: Optional[datetime] = None
     location: Optional[str] = None
 
+    _normalize_start_ts = field_validator("start_ts")(_naive_utc)
+    _normalize_end_ts = field_validator("end_ts")(_naive_utc)
+
 
 class CalendarEventSyncRequest(BaseModel):
     events: list[CalendarEventSyncItem]
@@ -179,6 +195,9 @@ class CalendarEventUpdate(BaseModel):
     location: Optional[str] = None
     inferred_event_type: Optional[str] = None
     inferred_formality: Optional[str] = None
+
+    _normalize_start_ts = field_validator("start_ts")(_naive_utc)
+    _normalize_end_ts = field_validator("end_ts")(_naive_utc)
 
 
 class RoutineOut(BaseModel):
@@ -252,6 +271,8 @@ class OutfitFeedbackRequest(BaseModel):
     is_favorite: bool = False
     worn_at: Optional[datetime] = None
 
+    _normalize_worn_at = field_validator("worn_at")(_naive_utc)
+
 
 class OutfitFeedbackOut(BaseModel):
     id: str
@@ -305,3 +326,32 @@ class AssistantRefineResponse(BaseModel):
     reply: str
     understood: bool
     run: Optional[RecommendationRunOut] = None
+
+
+SyncObjectType = Literal["wardrobe_item", "outfit_feedback"]
+SyncAction = Literal["update", "create"]
+SyncStatus = Literal["queued", "running", "done", "failed"]
+
+
+class SyncItemIn(BaseModel):
+    object_type: SyncObjectType
+    object_id: str
+    action: SyncAction
+    payload: dict[str, Any]
+    client_queued_at: datetime
+
+    _normalize_client_queued_at = field_validator("client_queued_at")(_naive_utc)
+
+
+class SyncReplayRequest(BaseModel):
+    items: list[SyncItemIn]
+
+
+class SyncItemResult(BaseModel):
+    object_id: str
+    status: SyncStatus
+    detail: Optional[str] = None
+
+
+class SyncReplayResponse(BaseModel):
+    results: list[SyncItemResult]

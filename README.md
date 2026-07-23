@@ -250,6 +250,62 @@ repeat-avoidance signal, and a chat assistant can refine a recommendation in pla
   in-browser (History list renders real past outfits; an assistant refinement produces a new, correctly
   re-ranked recommendation without re-fetching weather/calendar)
 
+## Phase 8: Offline hardening & sync
+
+Current status: Complete. Wardrobe browsing, the last recommendation, and the logged-in session all survive
+a full airplane-mode reload; edits made offline queue locally and replay cleanly once back online.
+
+- ✅ `POST /sync/replay` — new `sync_queue` table (canonical `documents/04` field names: `object_type`,
+  `object_id`, `action`, `payload_json`, `status`, `retry_count`, `last_error` — the Phase-0 stub had
+  drifted names and was never actually used until now) logs every replay attempt for audit, exactly the
+  table's real purpose rather than a canonical-schema box to check
+- ✅ Two mutation types are queueable offline, matching the exit criteria's literal "queued **edits**"
+  scope: wardrobe item field edits (name/category/color/formality/etc.) and outfit feedback
+  (like/worn/favorite/skip). New item creation with a photo upload is explicitly out of scope — queuing a
+  multipart photo upload for later replay is a materially bigger problem (binary storage, not just JSON)
+  than this phase's exit criteria calls for
+- ✅ Conflict rule (`documents/03` §16: "sync queue, timestamps, and conflict rules"): last-write-wins by
+  timestamp — if the server's `updated_at` is newer than the edit's `client_queued_at`, the queued edit is
+  reported as a conflict and dropped rather than silently overwriting a newer server value
+- ✅ **Local model integration**: no separate on-device model was built. Every existing "seam" function
+  (`analyzer.py`, `body_analyzer.py`, `event_classifier.py`, the rule-based recommender) already runs
+  entirely server-side with zero calls to any cloud AI provider — cloud enhancement is Phase 9's job, not
+  yet built — so `local_preferred` mode already gets the fastest, most private path today by construction.
+  True on-device inference remains explicitly deferred, consistent with `documents/03`'s own hedge
+  ("if local model available")
+- ✅ Wardrobe items and the last recommendation are cached client-side (mirroring the exact
+  `hydrateFromCache`/`isFromCache`/`isOffline` pattern already established for weather/calendar in Phase
+  4) and render from cache — with a visible, calm "Offline — showing saved data" badge, never a blank or
+  broken screen — when the live fetch fails
+- ✅ Fixed a real bug surfaced while testing this phase: `auth-store.hydrate()` deleted the stored token
+  and logged the user out on **any** failure fetching the profile, including a pure network failure —
+  meaning "reopen the app in airplane mode" always bounced to the login screen. Now a network failure
+  (`ApiError.status === 0`) falls back to a cached profile and keeps the session; only a real auth failure
+  (expired/invalid token) still logs out
+- ✅ Fixed a second, more serious latent bug found via this phase's testing: every client-supplied
+  timestamp (`worn_at`, `client_queued_at`, calendar `start_ts`/`end_ts`) arrives from the mobile app as a
+  JS `Date().toISOString()` string, which is always timezone-**aware** ("Z"-suffixed) — but every
+  timestamp elsewhere in this codebase is naive UTC (`datetime.utcnow()`). Comparing the two raised an
+  unhandled `TypeError` in the new sync-conflict check, and — undetected until now because every prior
+  phase's curl testing constructed naive timestamps by hand — silently corrupted the Phase 7
+  repeat-avoidance window query for any `worn_at` actually submitted through the real mobile UI. Fixed
+  with a shared Pydantic validator (`schemas._naive_utc`) applied to every client-supplied datetime field
+- ✅ Verified end-to-end via curl: `/sync/replay` for a valid wardrobe-item edit, a valid feedback create,
+  a timestamp conflict (correctly rejected, not overwritten), and an invalid/missing entity — each logged
+  correctly to `sync_queue`; confirmed the repeat-avoidance fix by generating a recommendation after a
+  real `worn_at`-bearing feedback submission and seeing the expected score penalty and explanation tag
+- ✅ Verified end-to-end in-browser (Playwright, simulating airplane mode via `context.setOffline()`):
+  full-page reload while offline restores the session and renders wardrobe/recommendation/context from
+  cache with visible offline badges; editing an item and submitting feedback while offline both apply
+  optimistically and show a "N changes queued" banner; going back online and syncing clears the queue and
+  the edits are confirmed present server-side afterward — zero real console errors throughout (the
+  CORS-flavored message the backend bug produced while it was still broken is gone after the fix)
+
+### Exit Criteria
+- ✅ Airplane-mode session: wardrobe browsing, cached recommendation, and queued edits all work; they sync
+  cleanly once back online — verified end-to-end via curl and in-browser, including confirming the synced
+  data lands correctly server-side after reconnecting
+
 ## Getting Started
 
 ### Install dependencies

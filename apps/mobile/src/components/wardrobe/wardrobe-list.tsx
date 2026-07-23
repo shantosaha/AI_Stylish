@@ -13,6 +13,8 @@ interface WardrobeListProps {
   items: WardrobeItem[];
   isLoading: boolean;
   error: string | null;
+  isFromCache?: boolean;
+  isOffline?: boolean;
   onRetry: () => void;
   onAddPress: () => void;
   onItemPress: (item: WardrobeItem) => void;
@@ -39,7 +41,16 @@ function ItemCard({ item, onPress }: { item: WardrobeItem; onPress: () => void }
   );
 }
 
-export function WardrobeList({ items, isLoading, error, onRetry, onAddPress, onItemPress }: WardrobeListProps) {
+export function WardrobeList({
+  items,
+  isLoading,
+  error,
+  isFromCache,
+  isOffline,
+  onRetry,
+  onAddPress,
+  onItemPress,
+}: WardrobeListProps) {
   const theme = useTheme();
 
   return (
@@ -54,6 +65,15 @@ export function WardrobeList({ items, isLoading, error, onRetry, onAddPress, onI
           </ThemedText>
         </Pressable>
       </View>
+
+      {isOffline || isFromCache ? (
+        <ThemedText
+          type="small"
+          style={isOffline ? styles.offlineBadge : styles.cacheBadge}
+          testID="wardrobe-list-cache-badge">
+          {isOffline ? 'Offline — showing saved data' : 'Showing cached data'}
+        </ThemedText>
+      ) : null}
 
       {isLoading ? (
         <View style={styles.centered}>
@@ -126,6 +146,14 @@ const styles = StyleSheet.create({
   error: {
     color: '#ef4444',
     textAlign: 'center',
+  },
+  offlineBadge: {
+    color: '#ef4444',
+    paddingBottom: Spacing.two,
+  },
+  cacheBadge: {
+    color: '#f59e0b',
+    paddingBottom: Spacing.two,
   },
   retryButton: {
     padding: Spacing.two,
