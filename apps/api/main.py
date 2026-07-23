@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 
 import models
 from database import Base, engine
-from routers import auth, profile, wardrobe
+from routers import auth, body, profile, wardrobe
 from storage import MEDIA_ROOT
 
 Base.metadata.create_all(bind=engine)
@@ -28,6 +28,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(wardrobe.router)
+app.include_router(body.router)
 
 app.mount("/media", StaticFiles(directory=MEDIA_ROOT), name="media")
 

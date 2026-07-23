@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -102,3 +102,31 @@ class WardrobeItemUpdate(BaseModel):
     material: Optional[str] = None
     brand: Optional[str] = None
     is_active: Optional[bool] = None
+
+
+class BodyImageOut(BaseModel):
+    id: str
+    image_url: str
+    is_primary: bool
+
+    class Config:
+        from_attributes = True
+
+
+class BodyAnalysisOut(BaseModel):
+    id: str
+    body_shape: Optional[str] = None
+    skin_tone: Optional[str] = None
+    face_shape: Optional[str] = None
+    height: Optional[str] = None
+    proportions: dict[str, Any] = {}
+    confidence: float
+    created_at: datetime
+    updated_at: datetime
+
+
+class BodyAnalysisUpdate(BaseModel):
+    body_shape: Optional[str] = None
+    skin_tone: Optional[str] = None
+    face_shape: Optional[str] = None
+    height: Optional[str] = None

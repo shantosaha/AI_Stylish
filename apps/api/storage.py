@@ -13,10 +13,18 @@ ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 
-def save_wardrobe_image(user_id: str, item_id: str, filename: str, content: bytes) -> str:
+def _save_image(namespace: str, sub_path: str, filename: str, content: bytes) -> str:
     ext = Path(filename).suffix.lower() or ".jpg"
     safe_name = f"{uuid.uuid4()}{ext}"
-    item_dir = MEDIA_ROOT / "wardrobe" / user_id / item_id
-    item_dir.mkdir(parents=True, exist_ok=True)
-    (item_dir / safe_name).write_bytes(content)
-    return f"/media/wardrobe/{user_id}/{item_id}/{safe_name}"
+    target_dir = MEDIA_ROOT / namespace / sub_path
+    target_dir.mkdir(parents=True, exist_ok=True)
+    (target_dir / safe_name).write_bytes(content)
+    return f"/media/{namespace}/{sub_path}/{safe_name}"
+
+
+def save_wardrobe_image(user_id: str, item_id: str, filename: str, content: bytes) -> str:
+    return _save_image("wardrobe", f"{user_id}/{item_id}", filename, content)
+
+
+def save_body_image(user_id: str, filename: str, content: bytes) -> str:
+    return _save_image("body", user_id, filename, content)

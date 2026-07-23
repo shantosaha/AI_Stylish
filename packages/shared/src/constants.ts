@@ -18,6 +18,9 @@ export const API_ENDPOINTS = {
 
   // Body Analysis
   BODY_IMAGES: '/body-images',
+  BODY_IMAGE_DELETE: (id: string) => `/body-images/${id}`,
+  BODY_ANALYSIS_GET: '/body-analysis',
+  BODY_ANALYSIS_UPDATE: '/body-analysis',
   BODY_ANALYSIS_RUN: '/body-analysis/run',
 
   // Context

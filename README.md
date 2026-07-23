@@ -64,6 +64,27 @@ Current status: Complete. Wardrobe CRUD, photo upload, auto-tagging, and correct
 - ✅ User can add an item by photo, see auto-tags, edit them, and see it persist (verified end-to-end
   in-browser, including corrections surviving a reload and a full create → correct → view → delete cycle)
 
+## Phase 3: Body profile
+
+Current status: Complete. Photo upload, body analysis, and correction all work end-to-end.
+
+- ✅ `POST/GET /body-images`, `DELETE /body-images/{id}` — up to 6 photos per account, one primary
+  (auto-reassigned to the next photo if the primary is deleted)
+- ✅ `POST /body-analysis/run`, `GET/PUT /body-analysis` — one current analysis per account, corrections
+  diffed and logged the same way as wardrobe item corrections
+- ✅ `body_analyzer.py`: the same honest-heuristic seam as the wardrobe analyzer — real (non-identifying)
+  skin-tone color sampling, explicit low-confidence placeholders for body/face shape, and no fabricated
+  guess for height (left null rather than invented) since no reliable heuristic exists for it yet
+- ✅ Body profile screen (reached from the Profile tab): photo grid with primary badge and delete,
+  camera/library upload, "Run analysis" with a visible confidence percentage, and an editable correction
+  form for every detected field
+- ✅ Deliberately does no face recognition or identity-linked processing, consistent with the biometric-data
+  handling item deferred in `IMPLEMENTATION_PLAN.md` §11
+
+### Exit Criteria
+- ✅ Uploading a full-body photo produces reviewable, editable structured traits (verified end-to-end
+  in-browser: upload → analyze → correct → persists across reload → photo delete)
+
 ## Getting Started
 
 ### Install dependencies
@@ -104,6 +125,6 @@ EXPO_PUBLIC_API_URL=http://localhost:8000 npm run dev:mobile
 
 ## Next Phase
 
-**Phase 3: Body profile** — 1–6 person photo upload, body analysis pipeline (shape, proportions, skin tone, face shape), confidence display, correction screen.
+**Phase 4: Context engine** — Calendar read + normalization, routine/time-block model, location + weather background fetch with caching/staleness handling.
 
 See `IMPLEMENTATION_PLAN.md` §4 for the full phased roadmap and exit criteria for each phase.

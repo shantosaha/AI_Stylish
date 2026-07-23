@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BodyProfileContent } from '@/components/body/body-profile-content';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -25,12 +26,23 @@ export default function ProfileScreen() {
 
   const [name, setName] = useState(profile?.name ?? '');
   const [isSaved, setIsSaved] = useState(false);
+  const [showBodyProfile, setShowBodyProfile] = useState(false);
 
   if (!profile) {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.loadingSafeArea}>
           <ActivityIndicator color={theme.text} />
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
+  if (showBodyProfile) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <BodyProfileContent onBack={() => setShowBodyProfile(false)} />
         </SafeAreaView>
       </ThemedView>
     );
@@ -96,6 +108,15 @@ export default function ProfileScreen() {
             </Pressable>
           ))}
         </ThemedView>
+
+        <Pressable onPress={() => setShowBodyProfile(true)} testID="profile-body-link">
+          <ThemedView type="backgroundElement" style={styles.section}>
+            <ThemedText type="default">Body profile</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              Photos and body traits for fit-aware recommendations
+            </ThemedText>
+          </ThemedView>
+        </Pressable>
 
         {error ? (
           <ThemedText type="small" style={styles.error}>

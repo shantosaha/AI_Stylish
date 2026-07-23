@@ -68,24 +68,27 @@ export interface WardrobeItem {
 // Body Analysis DTOs
 export interface BodyImage {
   id: string;
-  user_id: string;
   image_url: string;
   is_primary: boolean;
-  created_at: string;
 }
 
 export interface BodyAnalysisResult {
   id: string;
-  user_id: string;
+  body_shape: string | null;
+  skin_tone: string | null;
+  face_shape: string | null;
+  height: string | null;
+  proportions: Record<string, unknown>;
+  confidence: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateBodyAnalysisRequest {
   body_shape?: string;
   skin_tone?: string;
   face_shape?: string;
   height?: string;
-  proportions?: Record<string, unknown>;
-  confidence: number;
-  corrections?: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
 }
 
 // Context DTOs

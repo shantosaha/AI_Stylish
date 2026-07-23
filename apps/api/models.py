@@ -38,6 +38,32 @@ class UserProfile(Base):
     user = relationship("User", back_populates="profile")
 
 
+class BodyImage(Base):
+    __tablename__ = "body_images"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    image_url = Column(String(1024), nullable=False)
+    is_primary = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class BodyAnalysisResult(Base):
+    __tablename__ = "body_analysis_results"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    body_shape = Column(String(100), nullable=True)
+    skin_tone = Column(String(100), nullable=True)
+    face_shape = Column(String(100), nullable=True)
+    height = Column(String(50), nullable=True)
+    proportions = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration
+    confidence = Column(Float, default=0.0)
+    corrections = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class WardrobeItem(Base):
     __tablename__ = "wardrobe_items"
 
