@@ -45,6 +45,25 @@ Current status: Complete. Auth, profile, and core navigation work end-to-end.
 ### Exit Criteria
 - ✅ A user can sign up, log in, and see an empty Home/Profile screen on a fresh install (verified end-to-end in-browser)
 
+## Phase 2: Wardrobe & vision
+
+Current status: Complete. Wardrobe CRUD, photo upload, auto-tagging, and correction all work end-to-end.
+
+- ✅ `GET/POST /wardrobe/items`, `PUT/DELETE /wardrobe/items/{id}`, `POST /wardrobe/items/{id}/analyze`
+- ✅ Photo upload (multipart) with local-disk media storage (swappable for Supabase Storage later)
+- ✅ Auto-tagging seam (`analyzer.py`): real dominant-color detection today, pluggable for a local/cloud
+  model later without changing the API contract — every detection is a low-confidence proposal stored
+  in a normal editable field, never a final value
+- ✅ Correction UI: every auto-tagged field (name, category, color, pattern, material, brand) is editable;
+  corrections are diffed against the original detection and logged to `item_analysis_results.corrections`
+- ✅ Wardrobe tab: grid list, empty/loading/error states, add-item flow (camera or library), item detail/edit,
+  delete, and a "discard" path that removes an uncommitted upload if the user backs out
+- ✅ Home tab reflects live wardrobe item count
+
+### Exit Criteria
+- ✅ User can add an item by photo, see auto-tags, edit them, and see it persist (verified end-to-end
+  in-browser, including corrections surviving a reload and a full create → correct → view → delete cycle)
+
 ## Getting Started
 
 ### Install dependencies
@@ -85,6 +104,6 @@ EXPO_PUBLIC_API_URL=http://localhost:8000 npm run dev:mobile
 
 ## Next Phase
 
-**Phase 2: Wardrobe & vision** — Wardrobe CRUD, image upload, auto clothing detection + tag proposal, manual correction UI.
+**Phase 3: Body profile** — 1–6 person photo upload, body analysis pipeline (shape, proportions, skin tone, face shape), confidence display, correction screen.
 
 See `IMPLEMENTATION_PLAN.md` §4 for the full phased roadmap and exit criteria for each phase.

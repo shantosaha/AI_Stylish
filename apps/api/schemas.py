@@ -4,6 +4,9 @@ from typing import Literal, Optional
 from pydantic import BaseModel, EmailStr, Field
 
 ProcessingMode = Literal["auto", "local_preferred", "cloud_preferred"]
+WardrobeCategory = Literal[
+    "tops", "bottoms", "outerwear", "shoes", "accessories", "bags", "jewelry"
+]
 
 
 class SignupRequest(BaseModel):
@@ -49,3 +52,53 @@ class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
     bio: Optional[str] = None
     processing_mode: Optional[ProcessingMode] = None
+
+
+class WardrobeImageOut(BaseModel):
+    id: str
+    image_url: str
+    is_primary: bool
+
+    class Config:
+        from_attributes = True
+
+
+class ItemAnalysisOut(BaseModel):
+    id: str
+    detected_category: Optional[str] = None
+    confidence: float
+    detected_color: Optional[str] = None
+    detected_pattern: Optional[str] = None
+    detected_material: Optional[str] = None
+    detected_brand: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class WardrobeItemOut(BaseModel):
+    id: str
+    category: WardrobeCategory
+    name: str
+    color: Optional[str] = None
+    pattern: Optional[str] = None
+    material: Optional[str] = None
+    brand: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    images: list[WardrobeImageOut] = []
+    analysis: Optional[ItemAnalysisOut] = None
+
+    class Config:
+        from_attributes = True
+
+
+class WardrobeItemUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[WardrobeCategory] = None
+    color: Optional[str] = None
+    pattern: Optional[str] = None
+    material: Optional[str] = None
+    brand: Optional[str] = None
+    is_active: Optional[bool] = None

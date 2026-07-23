@@ -36,40 +36,33 @@ export interface UserProfile {
 // Wardrobe DTOs
 export interface WardrobeImage {
   id: string;
-  wardrobe_item_id: string;
   image_url: string;
   is_primary: boolean;
-  created_at: string;
 }
 
 export interface ItemAnalysisResult {
   id: string;
-  wardrobe_item_id: string;
-  detected_category: WardrobeItemCategory;
+  detected_category: WardrobeItemCategory | null;
   confidence: number;
-  detected_color?: string;
-  detected_pattern?: string;
-  detected_material?: string;
-  detected_brand?: string;
-  corrections?: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
+  detected_color: string | null;
+  detected_pattern: string | null;
+  detected_material: string | null;
+  detected_brand: string | null;
 }
 
 export interface WardrobeItem {
   id: string;
-  user_id: string;
   category: WardrobeItemCategory;
   name: string;
-  color?: string;
-  pattern?: string;
-  material?: string;
-  brand?: string;
+  color: string | null;
+  pattern: string | null;
+  material: string | null;
+  brand: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  images?: WardrobeImage[];
-  analysis?: ItemAnalysisResult;
+  images: WardrobeImage[];
+  analysis: ItemAnalysisResult | null;
 }
 
 // Body Analysis DTOs
@@ -184,13 +177,12 @@ export interface AuthResponse {
   user: User;
 }
 
-export interface CreateWardrobeItemRequest {
-  category: WardrobeItemCategory;
-  name: string;
-  color?: string;
-  pattern?: string;
-  material?: string;
-  brand?: string;
+// POST /wardrobe/items is multipart/form-data (image file + these optional
+// fields) - not JSON, so this describes the non-file fields only. Omitted
+// name/category are auto-filled server-side from the auto-tagger.
+export interface CreateWardrobeItemFields {
+  name?: string;
+  category?: WardrobeItemCategory;
 }
 
 export interface UpdateWardrobeItemRequest {

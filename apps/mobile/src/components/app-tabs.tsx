@@ -20,6 +20,11 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="wardrobe">
+        <NativeTabs.Trigger.Label>Wardrobe</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="tshirt" md="checkroom" />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="explore">
         <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

@@ -44,5 +44,8 @@ wheels/
 *.db
 *.db-journal
 
+# Local media storage (dev fallback for cloud storage)
+media/
+
 # Poetry
 poetry.lock

@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 import models
 from database import Base, engine
-from routers import auth, profile
+from routers import auth, profile, wardrobe
+from storage import MEDIA_ROOT
 
 Base.metadata.create_all(bind=engine)
+MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(
     title="AI Personal Wardrobe Assistant API",
@@ -24,6 +27,9 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(profile.router)
+app.include_router(wardrobe.router)
+
+app.mount("/media", StaticFiles(directory=MEDIA_ROOT), name="media")
 
 
 @app.get("/health")

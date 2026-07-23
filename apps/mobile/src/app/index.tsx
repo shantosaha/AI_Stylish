@@ -1,14 +1,25 @@
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { Platform, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useAuthStore } from '@/state/auth-store';
+import { useWardrobeStore } from '@/state/wardrobe-store';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const profile = useAuthStore((s) => s.profile);
+  const token = useAuthStore((s) => s.token);
   const name = profile?.name?.trim();
+  const items = useWardrobeStore((s) => s.items);
+  const fetchItems = useWardrobeStore((s) => s.fetchItems);
+
+  useEffect(() => {
+    if (token) fetchItems(token);
+  }, [token, fetchItems]);
 
   return (
     <ThemedView style={styles.container}>
@@ -20,11 +31,15 @@ export default function HomeScreen() {
           Add wardrobe items to get your first outfit recommendation.
         </ThemedText>
 
-        <ThemedView type="backgroundElement" style={styles.emptyState}>
-          <ThemedText type="default" themeColor="textSecondary">
-            Your wardrobe is empty. Item upload is coming in the next phase.
-          </ThemedText>
-        </ThemedView>
+        <Pressable onPress={() => router.push('/wardrobe')} testID="home-wardrobe-link">
+          <ThemedView type="backgroundElement" style={styles.emptyState}>
+            <ThemedText type="default" themeColor="textSecondary">
+              {items.length > 0
+                ? `${items.length} item${items.length === 1 ? '' : 's'} in your wardrobe. Tap to manage.`
+                : 'Your wardrobe is empty. Tap to add your first item.'}
+            </ThemedText>
+          </ThemedView>
+        </Pressable>
       </SafeAreaView>
     </ThemedView>
   );
