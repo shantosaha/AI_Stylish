@@ -55,11 +55,11 @@ function FormField({
   const theme = useTheme();
   return (
     <View style={styles.field}>
-      <ThemedText type="smallBold" themeColor="textSecondary">
+      <ThemedText type="label" themeColor="accent">
         {label}
       </ThemedText>
       <TextInput
-        style={[styles.input, { color: theme.text }]}
+        style={[styles.input, { color: theme.text, borderColor: theme.border }]}
         value={value}
         onChangeText={onChangeText}
         editable={!disabled}
@@ -71,6 +71,7 @@ function FormField({
 }
 
 export function ItemForm({ values, onChange, disabled }: ItemFormProps) {
+  const theme = useTheme();
   const set = <K extends keyof ItemFormValues>(key: K, value: ItemFormValues[K]) =>
     onChange({ ...values, [key]: value });
 
@@ -85,19 +86,28 @@ export function ItemForm({ values, onChange, disabled }: ItemFormProps) {
       />
 
       <View style={styles.field}>
-        <ThemedText type="smallBold" themeColor="textSecondary">
+        <ThemedText type="label" themeColor="accent">
           Category
         </ThemedText>
-        <ThemedView type="backgroundElement" style={styles.categoryList}>
-          {CATEGORY_OPTIONS.map((option) => (
+        <ThemedView
+          type="backgroundElement"
+          style={[styles.categoryList, { borderColor: theme.border }]}>
+          {CATEGORY_OPTIONS.map((option, index) => (
             <Pressable
               key={option.value}
-              style={styles.categoryRow}
+              style={[
+                styles.categoryRow,
+                index > 0 && { borderTopWidth: 1, borderTopColor: theme.border },
+              ]}
               onPress={() => set('category', option.value)}
               disabled={disabled}
               testID={`item-category-${option.value}`}>
               <ThemedText type="default">{option.label}</ThemedText>
-              {values.category === option.value ? <ThemedText type="default">✓</ThemedText> : null}
+              {values.category === option.value ? (
+                <ThemedText type="default" themeColor="accent">
+                  ✓
+                </ThemedText>
+              ) : null}
             </Pressable>
           ))}
         </ThemedView>
@@ -133,18 +143,29 @@ export function ItemForm({ values, onChange, disabled }: ItemFormProps) {
       />
 
       <View style={styles.field}>
-        <ThemedText type="smallBold" themeColor="textSecondary">
+        <ThemedText type="label" themeColor="accent">
           Formality
         </ThemedText>
         <View style={styles.formalityRow}>
           {FORMALITY_OPTIONS.map((option) => (
             <Pressable
               key={option.value}
-              style={[styles.formalityOption, values.formality === option.value && styles.formalityOptionSelected]}
+              style={[
+                styles.formalityOption,
+                { borderColor: theme.border },
+                values.formality === option.value && {
+                  backgroundColor: theme.accent,
+                  borderColor: theme.accent,
+                },
+              ]}
               onPress={() => set('formality', option.value)}
               disabled={disabled}
               testID={`item-formality-${option.value}`}>
-              <ThemedText type="small">{option.label}</ThemedText>
+              <ThemedText
+                type="small"
+                themeColor={values.formality === option.value ? 'accentText' : 'text'}>
+                {option.label}
+              </ThemedText>
             </Pressable>
           ))}
         </View>
@@ -161,14 +182,15 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   input: {
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
     fontSize: 16,
-    backgroundColor: '#ffffff10',
   },
   categoryList: {
     borderRadius: Spacing.two,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
   },
   categoryRow: {
@@ -183,12 +205,9 @@ const styles = StyleSheet.create({
   },
   formalityOption: {
     flex: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingVertical: Spacing.two,
     alignItems: 'center',
-    backgroundColor: '#ffffff10',
-  },
-  formalityOptionSelected: {
-    backgroundColor: '#2563eb40',
   },
 });

@@ -6,7 +6,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-
 import { resolveMediaUrl } from '@/api/client';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 interface WardrobeListProps {
@@ -21,19 +21,20 @@ interface WardrobeListProps {
 }
 
 function ItemCard({ item, onPress }: { item: WardrobeItem; onPress: () => void }) {
+  const theme = useTheme();
   const primaryImage = item.images.find((img) => img.is_primary) ?? item.images[0];
   return (
     <Pressable style={styles.card} onPress={onPress} testID={`wardrobe-item-${item.id}`}>
-      <ThemedView type="backgroundElement" style={styles.cardInner}>
+      <ThemedView type="backgroundElement" style={[styles.cardInner, { borderColor: theme.border }]}>
         {primaryImage ? (
           <Image source={{ uri: resolveMediaUrl(primaryImage.image_url) }} style={styles.thumbnail} />
         ) : (
-          <View style={styles.thumbnailPlaceholder} />
+          <View style={[styles.thumbnailPlaceholder, { borderColor: theme.border }]} />
         )}
         <ThemedText type="smallBold" numberOfLines={1}>
           {item.name}
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="label" themeColor="textSecondary">
           {WARDROBE_CATEGORY_LABELS[item.category]}
         </ThemedText>
       </ThemedView>
@@ -59,8 +60,11 @@ export function WardrobeList({
         <ThemedText type="title" style={styles.title}>
           Wardrobe
         </ThemedText>
-        <Pressable style={styles.addButton} onPress={onAddPress} testID="wardrobe-add-button">
-          <ThemedText type="default" style={styles.addButtonText}>
+        <Pressable
+          style={[styles.addButton, { backgroundColor: theme.accent }]}
+          onPress={onAddPress}
+          testID="wardrobe-add-button">
+          <ThemedText type="default" style={[styles.addButtonText, { color: theme.accentText }]}>
             + Add item
           </ThemedText>
         </Pressable>
@@ -69,7 +73,8 @@ export function WardrobeList({
       {isOffline || isFromCache ? (
         <ThemedText
           type="small"
-          style={isOffline ? styles.offlineBadge : styles.cacheBadge}
+          themeColor={isOffline ? 'negative' : 'accent'}
+          style={styles.cacheBadge}
           testID="wardrobe-list-cache-badge">
           {isOffline ? 'Offline — showing saved data' : 'Showing cached data'}
         </ThemedText>
@@ -77,11 +82,11 @@ export function WardrobeList({
 
       {isLoading ? (
         <View style={styles.centered}>
-          <ActivityIndicator color={theme.text} />
+          <ActivityIndicator color={theme.accent} />
         </View>
       ) : error ? (
         <View style={styles.centered}>
-          <ThemedText type="default" style={styles.error}>
+          <ThemedText type="default" themeColor="negative" style={styles.centerText}>
             {error}
           </ThemedText>
           <Pressable onPress={onRetry} style={styles.retryButton} testID="wardrobe-retry">
@@ -89,7 +94,9 @@ export function WardrobeList({
           </Pressable>
         </View>
       ) : items.length === 0 ? (
-        <ThemedView type="backgroundElement" style={styles.emptyState}>
+        <ThemedView
+          type="backgroundElement"
+          style={[styles.emptyState, { borderColor: theme.border }]}>
           <ThemedText type="default" themeColor="textSecondary" style={styles.centerText}>
             Your wardrobe is empty. Add your first item to get outfit recommendations.
           </ThemedText>
@@ -120,18 +127,16 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.three,
   },
   title: {
-    fontSize: 32,
-    lineHeight: 40,
+    fontSize: 28,
+    lineHeight: 34,
   },
   addButton: {
-    backgroundColor: '#2563eb',
     borderRadius: Spacing.five,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
   },
   addButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
+    fontFamily: Fonts.sansSemiBold,
   },
   centered: {
     flex: 1,
@@ -143,23 +148,15 @@ const styles = StyleSheet.create({
   centerText: {
     textAlign: 'center',
   },
-  error: {
-    color: '#ef4444',
-    textAlign: 'center',
-  },
-  offlineBadge: {
-    color: '#ef4444',
-    paddingBottom: Spacing.two,
-  },
   cacheBadge: {
-    color: '#f59e0b',
     paddingBottom: Spacing.two,
   },
   retryButton: {
     padding: Spacing.two,
   },
   emptyState: {
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.four,
     alignItems: 'center',
   },
@@ -174,19 +171,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardInner: {
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.two,
-    gap: Spacing.one,
+    gap: Spacing.half,
   },
   thumbnail: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
   },
   thumbnailPlaceholder: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: Spacing.two,
-    backgroundColor: '#00000010',
+    borderRadius: Spacing.one,
+    borderWidth: 1,
   },
 });

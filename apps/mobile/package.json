@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "dependencies": {
     "@ai-stylish/shared": "^1.0.0",
+    "@expo-google-fonts/fraunces": "^0.4.1",
+    "@expo-google-fonts/work-sans": "^0.4.2",
     "@expo/ui": "~57.0.7",
     "expo": "~57.0.8",
     "expo-calendar": "~57.0.1",

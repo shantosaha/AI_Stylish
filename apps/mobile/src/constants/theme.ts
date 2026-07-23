@@ -1,6 +1,7 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * "Tailor's atelier" palette — ink, chalk paper, and brass hardware, the vocabulary of a garment
+ * tag rather than a generic SaaS default. Named tokens carry semantic meaning (brass = the one
+ * accent; moss/rust = positive/negative states) so every screen draws from the same small set.
  */
 
 import '@/global.css';
@@ -9,47 +10,45 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#15161B',
+    background: '#F6F4EF',
+    backgroundElement: '#EDEAE1',
+    backgroundSelected: '#E2DDCF',
+    textSecondary: '#5C6070',
+    accent: '#A8763A',
+    accentText: '#FFFFFF',
+    positive: '#5F7A5E',
+    negative: '#A2453A',
+    border: '#DCD6C8',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#F2EFE7',
+    background: '#15161B',
+    backgroundElement: '#1F2027',
+    backgroundSelected: '#2A2C35',
+    textSecondary: '#9CA0B0',
+    accent: '#D6A153',
+    accentText: '#15161B',
+    positive: '#84A382',
+    negative: '#D07868',
+    border: '#33353F',
   },
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+/**
+ * Fraunces (display, tailored/editorial) + Work Sans (body, warm grotesque) — loaded via
+ * expo-font's useFonts in the root layout, which registers these exact family names on web too.
+ */
+export const Fonts = {
+  display: 'Fraunces_600SemiBold',
+  displayItalic: 'Fraunces_500Medium_Italic',
+  sans: 'WorkSans_400Regular',
+  sansMedium: 'WorkSans_500Medium',
+  sansSemiBold: 'WorkSans_600SemiBold',
+  mono: Platform.select({ ios: 'ui-monospace', web: 'var(--font-mono)', default: 'monospace' }),
+} as const;
 
 export const Spacing = {
   half: 2,

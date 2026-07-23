@@ -62,14 +62,17 @@ export function HistoryScreen({ onBack }: { onBack: () => void }) {
 
       {isLoading ? (
         <View style={styles.centered} testID="history-loading">
-          <ActivityIndicator color={theme.text} />
+          <ActivityIndicator color={theme.accent} />
         </View>
       ) : error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="negative">
           {error}
         </ThemedText>
       ) : entries.length === 0 ? (
-        <ThemedView type="backgroundElement" style={styles.card} testID="history-empty">
+        <ThemedView
+          type="backgroundElement"
+          style={[styles.card, { borderColor: theme.border }]}
+          testID="history-empty">
           <ThemedText type="default" themeColor="textSecondary">
             No history yet. Mark an outfit as worn or favorite to start building your history.
           </ThemedText>
@@ -80,7 +83,11 @@ export function HistoryScreen({ onBack }: { onBack: () => void }) {
             (item): item is NonNullable<typeof item> => item !== null
           );
           return (
-            <ThemedView type="backgroundElement" style={styles.card} key={entry.id} testID="history-entry">
+            <ThemedView
+              type="backgroundElement"
+              style={[styles.card, { borderColor: theme.border }]}
+              key={entry.id}
+              testID="history-entry">
               <View style={styles.itemRow}>
                 {items.map((item) => (
                   <ItemThumbnail key={item.id} item={item} />
@@ -88,29 +95,33 @@ export function HistoryScreen({ onBack }: { onBack: () => void }) {
               </View>
               <View style={styles.badgeRow}>
                 {entry.feedback_code ? (
-                  <View style={styles.badge}>
+                  <View style={[styles.badge, { borderColor: theme.border }]}>
                     <ThemedText type="small" themeColor="textSecondary">
                       {OUTFIT_FEEDBACK_LABELS[entry.feedback_code]}
                     </ThemedText>
                   </View>
                 ) : null}
                 {entry.is_favorite ? (
-                  <View style={styles.badge}>
-                    <ThemedText type="small" themeColor="textSecondary">
+                  <View style={[styles.badge, { borderColor: theme.border }]}>
+                    <ThemedText type="small" themeColor="accent">
                       ★ Favorite
                     </ThemedText>
                   </View>
                 ) : null}
                 {entry.worn_at ? (
-                  <View style={styles.badge}>
+                  <View style={[styles.badge, { borderColor: theme.border }]}>
                     <ThemedText type="small" themeColor="textSecondary">
                       Worn {formatDate(entry.worn_at)}
                     </ThemedText>
                   </View>
                 ) : null}
                 {repeatIds.has(entry.id) ? (
-                  <View style={styles.repeatBadge} testID={`history-repeat-${entry.id}`}>
-                    <ThemedText type="small">Repeat outfit</ThemedText>
+                  <View
+                    style={[styles.repeatBadge, { backgroundColor: theme.accent }]}
+                    testID={`history-repeat-${entry.id}`}>
+                    <ThemedText type="small" themeColor="accentText">
+                      Repeat outfit
+                    </ThemedText>
                   </View>
                 ) : null}
               </View>
@@ -132,14 +143,15 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    lineHeight: 36,
+    lineHeight: 34,
   },
   centered: {
     alignItems: 'center',
     paddingVertical: Spacing.six,
   },
   card: {
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.two,
   },
@@ -154,18 +166,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   badge: {
-    borderRadius: Spacing.one,
+    borderRadius: Spacing.four,
+    borderWidth: 1,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
-    backgroundColor: '#ffffff10',
   },
   repeatBadge: {
-    borderRadius: Spacing.one,
+    borderRadius: Spacing.four,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
-    backgroundColor: '#f59e0b40',
-  },
-  error: {
-    color: '#ef4444',
   },
 });

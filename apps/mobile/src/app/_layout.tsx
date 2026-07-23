@@ -1,3 +1,13 @@
+import {
+  Fraunces_500Medium_Italic,
+  Fraunces_600SemiBold,
+} from '@expo-google-fonts/fraunces';
+import {
+  WorkSans_400Regular,
+  WorkSans_500Medium,
+  WorkSans_600SemiBold,
+} from '@expo-google-fonts/work-sans';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -18,6 +28,13 @@ export default function RootLayout() {
   const token = useAuthStore((s) => s.token);
   const hydrate = useAuthStore((s) => s.hydrate);
   const loadSyncQueue = useSyncQueueStore((s) => s.loadQueue);
+  const [fontsLoaded] = useFonts({
+    Fraunces_600SemiBold,
+    Fraunces_500Medium_Italic,
+    WorkSans_400Regular,
+    WorkSans_500Medium,
+    WorkSans_600SemiBold,
+  });
 
   useEffect(() => {
     hydrate();
@@ -29,6 +46,8 @@ export default function RootLayout() {
     // regardless of which tab the app happens to land on.
     if (token) loadSyncQueue();
   }, [token, loadSyncQueue]);
+
+  if (!fontsLoaded) return null;
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

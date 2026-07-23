@@ -6,7 +6,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, TextInp
 import { resolveMediaUrl } from '@/api/client';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { BottomTabInset, Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/state/auth-store';
 import { useBodyStore } from '@/state/body-store';
@@ -37,11 +37,11 @@ function Field({
   const theme = useTheme();
   return (
     <View style={styles.field}>
-      <ThemedText type="smallBold" themeColor="textSecondary">
+      <ThemedText type="label" themeColor="accent">
         {label}
       </ThemedText>
       <TextInput
-        style={[styles.input, { color: theme.text }]}
+        style={[styles.input, { color: theme.text, borderColor: theme.border }]}
         value={value}
         onChangeText={onChangeText}
         editable={!disabled}
@@ -149,29 +149,32 @@ export function BodyProfileContent({ onBack }: { onBack: () => void }) {
         Used for fit-aware outfit recommendations. Photos stay private to your account.
       </ThemedText>
 
-      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+      <ThemedText type="label" themeColor="accent" style={styles.sectionTitle}>
         Photos ({images.length}/{MAX_PHOTOS})
       </ThemedText>
 
       {isLoading ? (
-        <ActivityIndicator color={theme.text} />
+        <ActivityIndicator color={theme.accent} />
       ) : (
         <View style={styles.photoGrid}>
           {images.map((img) => (
             <View key={img.id} style={styles.photoTile}>
-              <Image source={{ uri: resolveMediaUrl(img.image_url) }} style={styles.photo} />
+              <Image
+                source={{ uri: resolveMediaUrl(img.image_url) }}
+                style={[styles.photo, { borderColor: theme.border }]}
+              />
               {img.is_primary ? (
-                <View style={styles.primaryBadge}>
-                  <ThemedText type="small" style={styles.primaryBadgeText}>
+                <View style={[styles.primaryBadge, { backgroundColor: theme.accent }]}>
+                  <ThemedText type="small" style={[styles.primaryBadgeText, { color: theme.accentText }]}>
                     Primary
                   </ThemedText>
                 </View>
               ) : null}
               <Pressable
-                style={styles.deleteBadge}
+                style={[styles.deleteBadge, { backgroundColor: theme.negative }]}
                 onPress={() => handleDeleteImage(img.id)}
                 testID={`body-photo-delete-${img.id}`}>
-                <ThemedText type="smallBold" style={styles.deleteBadgeText}>
+                <ThemedText type="smallBold" style={[styles.deleteBadgeText, { color: theme.accentText }]}>
                   ✕
                 </ThemedText>
               </Pressable>
@@ -183,28 +186,28 @@ export function BodyProfileContent({ onBack }: { onBack: () => void }) {
       {images.length < MAX_PHOTOS ? (
         <View style={styles.addPhotoRow}>
           <Pressable
-            style={[styles.secondaryButton, isUploading && styles.disabled]}
+            style={[styles.secondaryButton, { borderColor: theme.border }, isUploading && styles.disabled]}
             onPress={() => pickAndUpload(true)}
             disabled={isUploading}
             testID="body-add-camera">
             <ThemedText type="default">Take photo</ThemedText>
           </Pressable>
           <Pressable
-            style={[styles.secondaryButton, isUploading && styles.disabled]}
+            style={[styles.secondaryButton, { borderColor: theme.border }, isUploading && styles.disabled]}
             onPress={() => pickAndUpload(false)}
             disabled={isUploading}
             testID="body-add-library">
-            {isUploading ? <ActivityIndicator /> : <ThemedText type="default">Choose photo</ThemedText>}
+            {isUploading ? <ActivityIndicator color={theme.accent} /> : <ThemedText type="default">Choose photo</ThemedText>}
           </Pressable>
         </View>
       ) : null}
 
-      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+      <ThemedText type="label" themeColor="accent" style={styles.sectionTitle}>
         Body traits
       </ThemedText>
 
       {!analysis ? (
-        <ThemedView type="backgroundElement" style={styles.notice}>
+        <ThemedView type="backgroundElement" style={[styles.notice, { borderColor: theme.border }]}>
           <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
             {images.length === 0
               ? 'Add a photo above to run body analysis.'
@@ -212,14 +215,14 @@ export function BodyProfileContent({ onBack }: { onBack: () => void }) {
           </ThemedText>
           {images.length > 0 ? (
             <Pressable
-              style={[styles.primaryButton, isAnalyzing && styles.disabled]}
+              style={[styles.primaryButton, { backgroundColor: theme.accent }, isAnalyzing && styles.disabled]}
               onPress={handleRunAnalysis}
               disabled={isAnalyzing}
               testID="body-run-analysis">
               {isAnalyzing ? (
-                <ActivityIndicator color="#ffffff" />
+                <ActivityIndicator color={theme.accentText} />
               ) : (
-                <ThemedText type="default" style={styles.primaryButtonText}>
+                <ThemedText type="default" style={[styles.primaryButtonText, { color: theme.accentText }]}>
                   Run analysis
                 </ThemedText>
               )}
@@ -228,7 +231,7 @@ export function BodyProfileContent({ onBack }: { onBack: () => void }) {
         </ThemedView>
       ) : (
         <View style={styles.form}>
-          <ThemedView type="backgroundElement" style={styles.notice}>
+          <ThemedView type="backgroundElement" style={[styles.notice, { borderColor: theme.border }]}>
             <ThemedText type="small" themeColor="textSecondary">
               We took a first guess ({Math.round(analysis.confidence * 100)}% confidence). Please check
               and correct these.
@@ -265,26 +268,26 @@ export function BodyProfileContent({ onBack }: { onBack: () => void }) {
           />
 
           {savedNotice ? (
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="small" themeColor="positive">
               Saved
             </ThemedText>
           ) : null}
 
           <Pressable
-            style={[styles.primaryButton, isSaving && styles.disabled]}
+            style={[styles.primaryButton, { backgroundColor: theme.accent }, isSaving && styles.disabled]}
             onPress={handleSave}
             disabled={isSaving}
             testID="body-save">
             {isSaving ? (
-              <ActivityIndicator color="#ffffff" />
+              <ActivityIndicator color={theme.accentText} />
             ) : (
-              <ThemedText type="default" style={styles.primaryButtonText}>
+              <ThemedText type="default" style={[styles.primaryButtonText, { color: theme.accentText }]}>
                 Save changes
               </ThemedText>
             )}
           </Pressable>
           <Pressable
-            style={[styles.secondaryButton, isAnalyzing && styles.disabled]}
+            style={[styles.secondaryButton, { borderColor: theme.border }, isAnalyzing && styles.disabled]}
             onPress={handleRunAnalysis}
             disabled={isAnalyzing}
             testID="body-reanalyze">
@@ -298,7 +301,7 @@ export function BodyProfileContent({ onBack }: { onBack: () => void }) {
       )}
 
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="negative">
           {error}
         </ThemedText>
       ) : null}
@@ -312,8 +315,8 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.six,
   },
   title: {
-    fontSize: 32,
-    lineHeight: 40,
+    fontSize: 28,
+    lineHeight: 34,
   },
   sectionTitle: {
     marginTop: Spacing.three,
@@ -330,34 +333,30 @@ const styles = StyleSheet.create({
   photo: {
     width: '100%',
     height: '100%',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
   },
   primaryBadge: {
     position: 'absolute',
     bottom: Spacing.one,
     left: Spacing.one,
-    backgroundColor: '#2563eb',
     borderRadius: Spacing.one,
     paddingHorizontal: Spacing.one,
   },
   primaryBadgeText: {
-    color: '#ffffff',
     fontSize: 10,
   },
   deleteBadge: {
     position: 'absolute',
     top: -Spacing.one,
     right: -Spacing.one,
-    backgroundColor: '#ef4444',
     borderRadius: Spacing.three,
     width: 22,
     height: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deleteBadgeText: {
-    color: '#ffffff',
-  },
+  deleteBadgeText: {},
   addPhotoRow: {
     flexDirection: 'row',
     gap: Spacing.two,
@@ -369,14 +368,16 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   input: {
-    borderRadius: Spacing.two,
+    fontFamily: Fonts.sans,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
     fontSize: 16,
-    backgroundColor: '#ffffff10',
   },
   notice: {
     borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.two,
     alignItems: 'center',
@@ -385,27 +386,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   primaryButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
     paddingVertical: Spacing.three,
     alignItems: 'center',
     flex: 1,
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
+    fontFamily: Fonts.sansSemiBold,
   },
   secondaryButton: {
-    backgroundColor: '#ffffff10',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingVertical: Spacing.three,
     alignItems: 'center',
     flex: 1,
   },
   disabled: {
     opacity: 0.6,
-  },
-  error: {
-    color: '#ef4444',
   },
 });

@@ -5,7 +5,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, TextInp
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/state/auth-store';
 import { useContextStore } from '@/state/context-store';
@@ -45,7 +45,7 @@ function EventRow({
   const [formality, setFormality] = useState(event.inferred_formality ?? '');
 
   return (
-    <ThemedView type="backgroundElement" style={styles.eventRow}>
+    <ThemedView type="backgroundElement" style={[styles.eventRow, { borderColor: theme.border }]}>
       <View style={styles.eventRowHeader}>
         <View style={styles.eventRowTitle}>
           <ThemedText type="smallBold">{event.title}</ThemedText>
@@ -55,14 +55,14 @@ function EventRow({
           </ThemedText>
         </View>
         <Pressable onPress={() => onDelete(event.id)} testID={`event-delete-${event.id}`}>
-          <ThemedText type="smallBold" style={styles.deleteText}>
+          <ThemedText type="smallBold" themeColor="negative">
             ✕
           </ThemedText>
         </Pressable>
       </View>
       <View style={styles.chipRow}>
         <TextInput
-          style={[styles.chipInput, { color: theme.text }]}
+          style={[styles.chipInput, { color: theme.text, borderColor: theme.border }]}
           value={eventType}
           onChangeText={setEventType}
           onBlur={() => onCorrect(event.id, 'inferred_event_type', eventType)}
@@ -71,7 +71,7 @@ function EventRow({
           testID={`event-type-${event.id}`}
         />
         <TextInput
-          style={[styles.chipInput, { color: theme.text }]}
+          style={[styles.chipInput, { color: theme.text, borderColor: theme.border }]}
           value={formality}
           onChangeText={setFormality}
           onBlur={() => onCorrect(event.id, 'inferred_formality', formality)}
@@ -198,7 +198,7 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
         Today
       </ThemedText>
 
-      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+      <ThemedText type="label" themeColor="accent" style={styles.sectionTitle}>
         Events
       </ThemedText>
 
@@ -223,9 +223,9 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
         </ThemedText>
       )}
 
-      <ThemedView type="backgroundElement" style={styles.addForm}>
+      <ThemedView type="backgroundElement" style={[styles.addForm, { borderColor: theme.border }]}>
         <TextInput
-          style={[styles.input, { color: theme.text }]}
+          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           placeholder="Event title"
           placeholderTextColor={theme.textSecondary}
           value={newTitle}
@@ -233,7 +233,7 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
           testID="event-add-title"
         />
         <TextInput
-          style={[styles.input, { color: theme.text }]}
+          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           placeholder="Start time (HH:MM)"
           placeholderTextColor={theme.textSecondary}
           value={newTime}
@@ -241,7 +241,7 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
           testID="event-add-time"
         />
         <TextInput
-          style={[styles.input, { color: theme.text }]}
+          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           placeholder="Location (optional)"
           placeholderTextColor={theme.textSecondary}
           value={newLocation}
@@ -249,14 +249,18 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
           testID="event-add-location"
         />
         <Pressable
-          style={[styles.primaryButton, (isAddingEvent || !newTitle.trim()) && styles.disabled]}
+          style={[
+            styles.primaryButton,
+            { backgroundColor: theme.accent },
+            (isAddingEvent || !newTitle.trim()) && styles.disabled,
+          ]}
           onPress={handleAddEvent}
           disabled={isAddingEvent || !newTitle.trim()}
           testID="event-add-submit">
           {isAddingEvent ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={theme.accentText} />
           ) : (
-            <ThemedText type="default" style={styles.primaryButtonText}>
+            <ThemedText type="default" style={[styles.primaryButtonText, { color: theme.accentText }]}>
               Add event
             </ThemedText>
           )}
@@ -265,7 +269,7 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
 
       {Platform.OS !== 'web' ? (
         <Pressable
-          style={[styles.secondaryButton, isSyncing && styles.disabled]}
+          style={[styles.secondaryButton, { borderColor: theme.border }, isSyncing && styles.disabled]}
           onPress={handleSyncFromCalendar}
           disabled={isSyncing}
           testID="context-sync-calendar">
@@ -277,13 +281,16 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
         </Pressable>
       ) : null}
 
-      <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+      <ThemedText type="label" themeColor="accent" style={styles.sectionTitle}>
         Routines
       </ThemedText>
 
       {routines.length ? (
         routines.map((routine) => (
-          <ThemedView key={routine.id} type="backgroundElement" style={styles.routineRow}>
+          <ThemedView
+            key={routine.id}
+            type="backgroundElement"
+            style={[styles.routineRow, { borderColor: theme.border }]}>
             <View style={styles.eventRowTitle}>
               <ThemedText type="smallBold">{routine.name}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
@@ -293,7 +300,7 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
             <Pressable
               onPress={() => token && deleteRoutine(token, routine.id).catch(() => {})}
               testID={`routine-delete-${routine.id}`}>
-              <ThemedText type="smallBold" style={styles.deleteText}>
+              <ThemedText type="smallBold" themeColor="negative">
                 ✕
               </ThemedText>
             </Pressable>
@@ -305,9 +312,9 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
         </ThemedText>
       )}
 
-      <ThemedView type="backgroundElement" style={styles.addForm}>
+      <ThemedView type="backgroundElement" style={[styles.addForm, { borderColor: theme.border }]}>
         <TextInput
-          style={[styles.input, { color: theme.text }]}
+          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           placeholder="Routine name (e.g. Gym then office)"
           placeholderTextColor={theme.textSecondary}
           value={routineName}
@@ -315,7 +322,7 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
           testID="routine-add-name"
         />
         <TextInput
-          style={[styles.input, { color: theme.text }]}
+          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           placeholder="Recurrence (e.g. weekdays)"
           placeholderTextColor={theme.textSecondary}
           value={routineRecurrence}
@@ -326,25 +333,37 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
           {TIME_BLOCKS.map((block) => (
             <Pressable
               key={block.value}
-              style={[styles.blockOption, routineBlock === block.value && styles.blockOptionSelected]}
+              style={[
+                styles.blockOption,
+                { borderColor: theme.border },
+                routineBlock === block.value && {
+                  backgroundColor: theme.accent,
+                  borderColor: theme.accent,
+                },
+              ]}
               onPress={() => setRoutineBlock(block.value)}
               testID={`routine-block-${block.value}`}>
-              <ThemedText type="small">{block.label}</ThemedText>
+              <ThemedText
+                type="small"
+                themeColor={routineBlock === block.value ? 'accentText' : 'text'}>
+                {block.label}
+              </ThemedText>
             </Pressable>
           ))}
         </View>
         <Pressable
           style={[
             styles.primaryButton,
+            { backgroundColor: theme.accent },
             (isAddingRoutine || !routineName.trim() || !routineRecurrence.trim()) && styles.disabled,
           ]}
           onPress={handleAddRoutine}
           disabled={isAddingRoutine || !routineName.trim() || !routineRecurrence.trim()}
           testID="routine-add-submit">
           {isAddingRoutine ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={theme.accentText} />
           ) : (
-            <ThemedText type="default" style={styles.primaryButtonText}>
+            <ThemedText type="default" style={[styles.primaryButtonText, { color: theme.accentText }]}>
               Add routine
             </ThemedText>
           )}
@@ -352,7 +371,7 @@ export function ContextManagerContent({ onBack }: { onBack: () => void }) {
       </ThemedView>
 
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="negative">
           {error}
         </ThemedText>
       ) : null}
@@ -366,14 +385,15 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.six,
   },
   title: {
-    fontSize: 32,
-    lineHeight: 40,
+    fontSize: 28,
+    lineHeight: 34,
   },
   sectionTitle: {
     marginTop: Spacing.three,
   },
   eventRow: {
     borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.two,
   },
@@ -391,52 +411,48 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   chipInput: {
+    fontFamily: Fonts.sans,
     flex: 1,
     borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
     fontSize: 13,
-    backgroundColor: '#ffffff10',
-  },
-  deleteText: {
-    color: '#ef4444',
   },
   addForm: {
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.two,
   },
   input: {
-    borderRadius: Spacing.two,
+    fontFamily: Fonts.sans,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
     fontSize: 16,
-    backgroundColor: '#ffffff10',
   },
   primaryButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
     paddingVertical: Spacing.three,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
+    fontFamily: Fonts.sansSemiBold,
   },
   secondaryButton: {
-    backgroundColor: '#ffffff10',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingVertical: Spacing.three,
     alignItems: 'center',
   },
   disabled: {
     opacity: 0.6,
   },
-  error: {
-    color: '#ef4444',
-  },
   routineRow: {
     borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.three,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -449,11 +465,8 @@ const styles = StyleSheet.create({
   blockOption: {
     flex: 1,
     borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingVertical: Spacing.two,
     alignItems: 'center',
-    backgroundColor: '#ffffff10',
-  },
-  blockOptionSelected: {
-    backgroundColor: '#2563eb40',
   },
 });

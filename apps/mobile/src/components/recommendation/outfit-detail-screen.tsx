@@ -95,14 +95,22 @@ export function OutfitDetailScreen({
           <Pressable
             key={m.type}
             onPress={() => setMode(m.type)}
-            style={[styles.modeButton, mode === m.type && styles.modeButtonActive]}
+            style={[
+              styles.modeButton,
+              { borderColor: theme.border },
+              mode === m.type && { backgroundColor: theme.accent, borderColor: theme.accent },
+            ]}
             testID={`preview-mode-${m.type}`}>
-            <ThemedText type="small">{m.label}</ThemedText>
+            <ThemedText type="small" themeColor={mode === m.type ? 'accentText' : 'text'}>
+              {m.label}
+            </ThemedText>
           </Pressable>
         ))}
       </View>
 
-      <ThemedView type="backgroundElement" style={styles.previewArea}>
+      <ThemedView
+        type="backgroundElement"
+        style={[styles.previewArea, { borderColor: theme.border }]}>
         {mode === 'combined_card' ? (
           <View style={styles.itemRow} testID="preview-combined-card">
             {items.map((item) => (
@@ -150,7 +158,7 @@ export function OutfitDetailScreen({
       </ThemedView>
 
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="negative">
           {error}
         </ThemedText>
       ) : null}
@@ -168,7 +176,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    lineHeight: 36,
+    lineHeight: 34,
   },
   modeRow: {
     flexDirection: 'row',
@@ -176,16 +184,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   modeButton: {
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.four,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-    backgroundColor: '#ffffff10',
-  },
-  modeButtonActive: {
-    backgroundColor: '#2563eb40',
   },
   previewArea: {
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.four,
     minHeight: 320,
     alignItems: 'center',
@@ -204,13 +210,10 @@ const styles = StyleSheet.create({
   previewImage: {
     width: 280,
     height: 373,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
   },
   notice: {
     marginBottom: Spacing.three,
     textAlign: 'center',
-  },
-  error: {
-    color: '#ef4444',
   },
 });

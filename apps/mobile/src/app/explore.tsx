@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BodyProfileContent } from '@/components/body/body-profile-content';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, Fonts, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/state/auth-store';
 
@@ -79,12 +79,12 @@ export default function ProfileScreen() {
           Profile
         </ThemedText>
 
-        <ThemedView type="backgroundElement" style={styles.section}>
-          <ThemedText type="smallBold" themeColor="textSecondary">
+        <ThemedView type="backgroundElement" style={[styles.section, { borderColor: theme.border }]}>
+          <ThemedText type="label" themeColor="accent">
             Name
           </ThemedText>
           <TextInput
-            style={[styles.input, { color: theme.text }]}
+            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
             placeholder="Your name"
             placeholderTextColor={theme.textSecondary}
             value={name}
@@ -93,26 +93,26 @@ export default function ProfileScreen() {
             testID="profile-name"
           />
           {isSaved ? (
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="small" themeColor="positive">
               Saved
             </ThemedText>
           ) : null}
         </ThemedView>
 
-        <ThemedView type="backgroundElement" style={styles.section}>
-          <ThemedText type="smallBold" themeColor="textSecondary">
+        <ThemedView type="backgroundElement" style={[styles.section, { borderColor: theme.border }]}>
+          <ThemedText type="label" themeColor="accent">
             AI processing mode
           </ThemedText>
           {PROCESSING_MODES.map((mode) => (
             <Pressable
               key={mode.value}
-              style={styles.modeRow}
+              style={[styles.modeRow, { borderTopColor: theme.border }]}
               onPress={() => handleSelectMode(mode.value)}
               disabled={isLoading}
               testID={`profile-mode-${mode.value}`}>
               <ThemedText type="default">{mode.label}</ThemedText>
               {profile.processing_mode === mode.value ? (
-                <ThemedText type="default" themeColor="text">
+                <ThemedText type="default" themeColor="accent" style={styles.checkmark}>
                   ✓
                 </ThemedText>
               ) : null}
@@ -120,20 +120,20 @@ export default function ProfileScreen() {
           ))}
         </ThemedView>
 
-        <ThemedView type="backgroundElement" style={styles.section}>
-          <ThemedText type="smallBold" themeColor="textSecondary">
+        <ThemedView type="backgroundElement" style={[styles.section, { borderColor: theme.border }]}>
+          <ThemedText type="label" themeColor="accent">
             Assistant tone
           </ThemedText>
           {TONE_OPTIONS.map((tone) => (
             <Pressable
               key={tone.value}
-              style={styles.modeRow}
+              style={[styles.modeRow, { borderTopColor: theme.border }]}
               onPress={() => handleSelectTone(tone.value)}
               disabled={isLoading}
               testID={`profile-tone-${tone.value}`}>
               <ThemedText type="default">{tone.label}</ThemedText>
               {profile.tone_preference === tone.value ? (
-                <ThemedText type="default" themeColor="text">
+                <ThemedText type="default" themeColor="accent" style={styles.checkmark}>
                   ✓
                 </ThemedText>
               ) : null}
@@ -142,7 +142,7 @@ export default function ProfileScreen() {
         </ThemedView>
 
         <Pressable onPress={() => setShowBodyProfile(true)} testID="profile-body-link">
-          <ThemedView type="backgroundElement" style={styles.section}>
+          <ThemedView type="backgroundElement" style={[styles.section, { borderColor: theme.border }]}>
             <ThemedText type="default">Body profile</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               Photos and body traits for fit-aware recommendations
@@ -151,13 +151,16 @@ export default function ProfileScreen() {
         </Pressable>
 
         {error ? (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" themeColor="negative">
             {error}
           </ThemedText>
         ) : null}
 
-        <Pressable style={styles.logoutButton} onPress={() => logout()} testID="profile-logout">
-          <ThemedText type="default" style={styles.logoutText}>
+        <Pressable
+          style={[styles.logoutButton, { borderColor: theme.negative }]}
+          onPress={() => logout()}
+          testID="profile-logout">
+          <ThemedText type="default" themeColor="negative" style={styles.logoutText}>
             Log out
           </ThemedText>
         </Pressable>
@@ -186,39 +189,40 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 32,
-    lineHeight: 40,
+    marginBottom: Spacing.one,
   },
   section: {
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.four,
     gap: Spacing.two,
   },
   input: {
-    borderRadius: Spacing.two,
+    fontFamily: Fonts.sans,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
     fontSize: 16,
-    backgroundColor: '#ffffff10',
   },
   modeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: Spacing.two,
+    borderTopWidth: 1,
   },
-  error: {
-    color: '#ef4444',
+  checkmark: {
+    fontFamily: Fonts.sansSemiBold,
   },
   logoutButton: {
     marginTop: Spacing.four,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingVertical: Spacing.three,
     alignItems: 'center',
-    backgroundColor: '#ef444420',
   },
   logoutText: {
-    color: '#ef4444',
-    fontWeight: '600',
+    fontFamily: Fonts.sansSemiBold,
   },
 });

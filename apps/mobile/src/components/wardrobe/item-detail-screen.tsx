@@ -6,7 +6,8 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { resolveMediaUrl } from '@/api/client';
 import { ThemedText } from '@/components/themed-text';
 import { ItemForm, ItemFormValues } from '@/components/wardrobe/item-form';
-import { Spacing } from '@/constants/theme';
+import { Fonts, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/state/auth-store';
 import { useSyncQueueStore } from '@/state/sync-queue-store';
 import { useWardrobeStore } from '@/state/wardrobe-store';
@@ -24,6 +25,7 @@ function itemToFormValues(item: WardrobeItem): ItemFormValues {
 }
 
 export function ItemDetailScreen({ item, onBack }: { item: WardrobeItem; onBack: () => void }) {
+  const theme = useTheme();
   const token = useAuthStore((s) => s.token);
   const updateItem = useWardrobeStore((s) => s.updateItem);
   const deleteItem = useWardrobeStore((s) => s.deleteItem);
@@ -79,43 +81,43 @@ export function ItemDetailScreen({ item, onBack }: { item: WardrobeItem; onBack:
       <ItemForm values={form} onChange={setForm} disabled={isSaving || isDeleting} />
 
       {savedNotice === 'saved' ? (
-        <ThemedText type="small" themeColor="textSecondary" testID="item-detail-saved">
+        <ThemedText type="small" themeColor="positive" testID="item-detail-saved">
           Saved
         </ThemedText>
       ) : savedNotice === 'queued' ? (
-        <ThemedText type="small" style={styles.queuedNotice} testID="item-detail-queued">
+        <ThemedText type="small" themeColor="accent" testID="item-detail-queued">
           Saved offline — will sync when back online
         </ThemedText>
       ) : null}
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="negative">
           {error}
         </ThemedText>
       ) : null}
 
       <Pressable
-        style={[styles.primaryButton, (isSaving || isDeleting) && styles.disabled]}
+        style={[styles.primaryButton, { backgroundColor: theme.accent }, (isSaving || isDeleting) && styles.disabled]}
         onPress={handleSave}
         disabled={isSaving || isDeleting}
         testID="item-detail-save">
         {isSaving ? (
-          <ActivityIndicator color="#ffffff" />
+          <ActivityIndicator color={theme.accentText} />
         ) : (
-          <ThemedText type="default" style={styles.primaryButtonText}>
+          <ThemedText type="default" style={[styles.primaryButtonText, { color: theme.accentText }]}>
             Save changes
           </ThemedText>
         )}
       </Pressable>
 
       <Pressable
-        style={[styles.deleteButton, (isSaving || isDeleting) && styles.disabled]}
+        style={[styles.deleteButton, { borderColor: theme.negative }, (isSaving || isDeleting) && styles.disabled]}
         onPress={handleDelete}
         disabled={isSaving || isDeleting}
         testID="item-detail-delete">
         {isDeleting ? (
-          <ActivityIndicator color="#ef4444" />
+          <ActivityIndicator color={theme.negative} />
         ) : (
-          <ThemedText type="default" style={styles.deleteButtonText}>
+          <ThemedText type="default" themeColor="negative" style={styles.deleteButtonText}>
             Delete item
           </ThemedText>
         )}
@@ -135,35 +137,26 @@ const styles = StyleSheet.create({
   previewLarge: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
   },
   primaryButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
     paddingVertical: Spacing.three,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
+    fontFamily: Fonts.sansSemiBold,
   },
   deleteButton: {
-    backgroundColor: '#ef444420',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingVertical: Spacing.three,
     alignItems: 'center',
   },
   deleteButtonText: {
-    color: '#ef4444',
-    fontWeight: '600',
+    fontFamily: Fonts.sansSemiBold,
   },
   disabled: {
     opacity: 0.6,
-  },
-  error: {
-    color: '#ef4444',
-  },
-  queuedNotice: {
-    color: '#f59e0b',
   },
 });

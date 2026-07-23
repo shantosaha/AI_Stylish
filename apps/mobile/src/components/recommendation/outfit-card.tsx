@@ -8,16 +8,21 @@ import { resolveMediaUrl } from '@/api/client';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export function ItemThumbnail({ item }: { item: WardrobeItem | null }) {
+  const theme = useTheme();
   if (!item) return null;
   const primaryImage = item.images.find((img) => img.is_primary) ?? item.images[0];
   return (
     <View style={styles.thumbnailWrap}>
       {primaryImage ? (
-        <Image source={{ uri: resolveMediaUrl(primaryImage.image_url) }} style={styles.thumbnail} />
+        <Image
+          source={{ uri: resolveMediaUrl(primaryImage.image_url) }}
+          style={[styles.thumbnail, { borderColor: theme.border }]}
+        />
       ) : (
-        <View style={styles.thumbnailPlaceholder} />
+        <View style={[styles.thumbnail, styles.thumbnailPlaceholder, { borderColor: theme.border }]} />
       )}
       <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
         {item.name}
@@ -41,6 +46,7 @@ export function OutfitCard({
   isSubmittingFeedback?: boolean;
   testID?: string;
 }) {
+  const theme = useTheme();
   const [lastFeedback, setLastFeedback] = useState<OutfitFeedback | null>(null);
   const items = [outfit.top, outfit.bottom, outfit.outerwear, outfit.shoes].filter(
     (item): item is WardrobeItem => item !== null
@@ -52,8 +58,11 @@ export function OutfitCard({
   };
 
   return (
-    <ThemedView type="backgroundElement" style={styles.card} testID={testID}>
-      <ThemedText type="smallBold" themeColor="textSecondary">
+    <ThemedView
+      type="backgroundElement"
+      style={[styles.card, { borderColor: theme.border }]}
+      testID={testID}>
+      <ThemedText type="label" themeColor="accent">
         {label}
       </ThemedText>
 
@@ -66,7 +75,7 @@ export function OutfitCard({
       {outfit.explanation_tags.length > 0 ? (
         <View style={styles.tagRow}>
           {outfit.explanation_tags.map((tag) => (
-            <View key={tag} style={styles.tag}>
+            <View key={tag} style={[styles.tag, { borderColor: theme.border }]}>
               <ThemedText type="small" themeColor="textSecondary">
                 {tag}
               </ThemedText>
@@ -76,7 +85,9 @@ export function OutfitCard({
       ) : null}
 
       {outfit.cloud_explanation ? (
-        <View style={styles.cloudNote} testID={testID ? `${testID}-cloud-note` : undefined}>
+        <View
+          style={[styles.cloudNote, { borderColor: theme.border }]}
+          testID={testID ? `${testID}-cloud-note` : undefined}>
           <ThemedText type="smallBold" themeColor="textSecondary">
             AI stylist note
           </ThemedText>
@@ -90,34 +101,82 @@ export function OutfitCard({
         </Pressable>
       ) : null}
 
-      <View style={styles.feedbackRow}>
+      <View style={[styles.feedbackRow, { borderTopColor: theme.border }]}>
         <Pressable
-          style={[styles.feedbackButton, lastFeedback === OutfitFeedback.LIKE && styles.feedbackButtonActive]}
+          style={[
+            styles.feedbackButton,
+            { borderColor: theme.border },
+            lastFeedback === OutfitFeedback.LIKE && [
+              styles.feedbackButtonActive,
+              { backgroundColor: theme.accent, borderColor: theme.accent },
+            ],
+          ]}
           onPress={() => handleFeedback(OutfitFeedback.LIKE)}
           disabled={isSubmittingFeedback}
           testID={`${testID}-like`}>
-          <ThemedText type="small">Like</ThemedText>
+          <ThemedText
+            type="small"
+            themeColor={lastFeedback === OutfitFeedback.LIKE ? 'accentText' : 'text'}>
+            Like
+          </ThemedText>
         </Pressable>
         <Pressable
-          style={[styles.feedbackButton, lastFeedback === OutfitFeedback.WORN && styles.feedbackButtonActive]}
+          style={[
+            styles.feedbackButton,
+            { borderColor: theme.border },
+            lastFeedback === OutfitFeedback.WORN && [
+              styles.feedbackButtonActive,
+              { backgroundColor: theme.accent, borderColor: theme.accent },
+            ],
+          ]}
           onPress={() => handleFeedback(OutfitFeedback.WORN, { wornAt: new Date().toISOString() })}
           disabled={isSubmittingFeedback}
           testID={`${testID}-worn`}>
-          <ThemedText type="small">Worn it</ThemedText>
+          <ThemedText
+            type="small"
+            themeColor={lastFeedback === OutfitFeedback.WORN ? 'accentText' : 'text'}>
+            Worn it
+          </ThemedText>
         </Pressable>
         <Pressable
-          style={[styles.feedbackButton, lastFeedback === OutfitFeedback.FAVORITE && styles.feedbackButtonActive]}
+          style={[
+            styles.feedbackButton,
+            { borderColor: theme.border },
+            lastFeedback === OutfitFeedback.FAVORITE && [
+              styles.feedbackButtonActive,
+              { backgroundColor: theme.accent, borderColor: theme.accent },
+            ],
+          ]}
           onPress={() => handleFeedback(OutfitFeedback.FAVORITE, { isFavorite: true })}
           disabled={isSubmittingFeedback}
           testID={`${testID}-favorite`}>
-          <ThemedText type="small">Favorite</ThemedText>
+          <ThemedText
+            type="small"
+            themeColor={lastFeedback === OutfitFeedback.FAVORITE ? 'accentText' : 'text'}>
+            Favorite
+          </ThemedText>
         </Pressable>
         <Pressable
-          style={[styles.feedbackButton, lastFeedback === OutfitFeedback.SKIP && styles.feedbackButtonActive]}
+          style={[
+            styles.feedbackButton,
+            { borderColor: theme.border },
+            lastFeedback === OutfitFeedback.SKIP && [
+              styles.feedbackButtonActive,
+              { backgroundColor: theme.accent, borderColor: theme.accent },
+            ],
+          ]}
           onPress={() => handleFeedback(OutfitFeedback.SKIP)}
           disabled={isSubmittingFeedback}
           testID={`${testID}-skip`}>
-          {isSubmittingFeedback ? <ActivityIndicator size="small" /> : <ThemedText type="small">Skip</ThemedText>}
+          {isSubmittingFeedback ? (
+            <ActivityIndicator size="small" color={theme.text} />
+          ) : (
+            <ThemedText
+              type="small"
+              themeColor={lastFeedback === OutfitFeedback.SKIP ? 'accentText' : 'text'}>
+              Skip
+            </ThemedText>
+          )}
         </Pressable>
       </View>
     </ThemedView>
@@ -126,9 +185,10 @@ export function OutfitCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.three,
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   itemRow: {
     flexDirection: 'row',
@@ -141,13 +201,11 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: 72,
     height: 72,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
   },
   thumbnailPlaceholder: {
-    width: 72,
-    height: 72,
-    borderRadius: Spacing.two,
-    backgroundColor: '#00000010',
+    backgroundColor: 'transparent',
   },
   tagRow: {
     flexDirection: 'row',
@@ -155,29 +213,31 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   tag: {
-    borderRadius: Spacing.one,
+    borderRadius: Spacing.four,
+    borderWidth: 1,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
-    backgroundColor: '#ffffff10',
   },
   cloudNote: {
     borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.two,
     gap: Spacing.half,
-    backgroundColor: '#2563eb1a',
   },
   feedbackRow: {
     flexDirection: 'row',
     gap: Spacing.two,
+    paddingTop: Spacing.two,
+    borderTopWidth: 1,
   },
   feedbackButton: {
     flex: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingVertical: Spacing.two,
     alignItems: 'center',
-    backgroundColor: '#ffffff10',
   },
   feedbackButtonActive: {
-    backgroundColor: '#2563eb40',
+    borderWidth: 1,
   },
 });

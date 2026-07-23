@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/state/auth-store';
 
@@ -35,6 +35,9 @@ export function SignupScreen({ onSwitchToLogin }: { onSwitchToLogin: () => void 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        <ThemedText type="label" themeColor="accent" style={styles.eyebrow}>
+          AI Stylish
+        </ThemedText>
         <ThemedText type="title" style={styles.title}>
           Create account
         </ThemedText>
@@ -42,9 +45,11 @@ export function SignupScreen({ onSwitchToLogin }: { onSwitchToLogin: () => void 
           Build your wardrobe and get daily outfit picks.
         </ThemedText>
 
-        <ThemedView type="backgroundElement" style={styles.form}>
+        <ThemedView
+          type="backgroundElement"
+          style={[styles.form, { borderColor: theme.border }]}>
           <TextInput
-            style={[styles.input, { color: theme.text }]}
+            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
             placeholder="Email"
             placeholderTextColor={theme.textSecondary}
             autoCapitalize="none"
@@ -58,7 +63,7 @@ export function SignupScreen({ onSwitchToLogin }: { onSwitchToLogin: () => void 
             testID="signup-email"
           />
           <TextInput
-            style={[styles.input, { color: theme.text }]}
+            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
             placeholder="Password (min 8 characters)"
             placeholderTextColor={theme.textSecondary}
             secureTextEntry
@@ -71,7 +76,7 @@ export function SignupScreen({ onSwitchToLogin }: { onSwitchToLogin: () => void 
             testID="signup-password"
           />
           <TextInput
-            style={[styles.input, { color: theme.text }]}
+            style={[styles.input, { color: theme.text, borderColor: theme.border }]}
             placeholder="Confirm password"
             placeholderTextColor={theme.textSecondary}
             secureTextEntry
@@ -85,25 +90,29 @@ export function SignupScreen({ onSwitchToLogin }: { onSwitchToLogin: () => void 
           />
 
           {!passwordsMatch && confirmPassword.length > 0 ? (
-            <ThemedText type="small" style={styles.error}>
+            <ThemedText type="small" themeColor="negative">
               Passwords don&apos;t match
             </ThemedText>
           ) : null}
           {error ? (
-            <ThemedText type="small" style={styles.error}>
+            <ThemedText type="small" themeColor="negative">
               {error}
             </ThemedText>
           ) : null}
 
           <Pressable
-            style={[styles.button, !canSubmit && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              { backgroundColor: theme.accent },
+              !canSubmit && styles.buttonDisabled,
+            ]}
             onPress={handleSubmit}
             disabled={!canSubmit}
             testID="signup-submit">
             {isLoading ? (
-              <ActivityIndicator color="#ffffff" />
+              <ActivityIndicator color={theme.accentText} />
             ) : (
-              <ThemedText type="default" style={styles.buttonText}>
+              <ThemedText type="default" style={[styles.buttonText, { color: theme.accentText }]}>
                 Sign up
               </ThemedText>
             )}
@@ -128,7 +137,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
+    gap: Spacing.two,
+  },
+  eyebrow: {
+    textAlign: 'center',
+    marginBottom: Spacing.one,
   },
   title: {
     textAlign: 'center',
@@ -138,20 +151,21 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.three,
   },
   form: {
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.four,
     gap: Spacing.three,
   },
   input: {
-    borderRadius: Spacing.two,
+    fontFamily: Fonts.sans,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
     fontSize: 16,
-    backgroundColor: '#ffffff10',
   },
   button: {
-    backgroundColor: '#2563eb',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
     paddingVertical: Spacing.three,
     alignItems: 'center',
     justifyContent: 'center',
@@ -161,11 +175,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   buttonText: {
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  error: {
-    color: '#ef4444',
+    fontFamily: Fonts.sansSemiBold,
   },
   switchLink: {
     alignItems: 'center',

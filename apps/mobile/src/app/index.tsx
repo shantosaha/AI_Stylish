@@ -187,13 +187,19 @@ export default function HomeScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ThemedText type="label" themeColor="accent">
+            {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+          </ThemedText>
           <ThemedText type="title" style={styles.title}>
             {name ? `Hey, ${name}` : 'Welcome'}
           </ThemedText>
 
           {pendingSyncCount > 0 ? (
-            <ThemedView type="backgroundElement" style={styles.card} testID="sync-pending-banner">
-              <ThemedText type="small" style={styles.cacheBadge}>
+            <ThemedView
+              type="backgroundElement"
+              style={[styles.card, { borderColor: theme.border }]}
+              testID="sync-pending-banner">
+              <ThemedText type="small" themeColor="accent">
                 {pendingSyncCount} change{pendingSyncCount === 1 ? '' : 's'} queued — will sync automatically
               </ThemedText>
               <Pressable
@@ -205,9 +211,12 @@ export default function HomeScreen() {
           ) : null}
 
           {syncConflicts.length > 0 ? (
-            <ThemedView type="backgroundElement" style={styles.card} testID="sync-conflicts-banner">
+            <ThemedView
+              type="backgroundElement"
+              style={[styles.card, { borderColor: theme.border }]}
+              testID="sync-conflicts-banner">
               {syncConflicts.map((c) => (
-                <ThemedText key={c.objectId} type="small" style={styles.offlineBadge}>
+                <ThemedText key={c.objectId} type="small" themeColor="negative">
                   {c.detail}
                 </ThemedText>
               ))}
@@ -219,7 +228,7 @@ export default function HomeScreen() {
 
           {!canRecommend ? (
             <Pressable onPress={() => router.push('/wardrobe')} testID="home-recommendation-empty">
-              <ThemedView type="backgroundElement" style={styles.card}>
+              <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
                 <ThemedText type="default" themeColor="textSecondary">
                   Add at least one top, one bottom, and one pair of shoes to get your first outfit
                   recommendation.
@@ -227,15 +236,17 @@ export default function HomeScreen() {
               </ThemedView>
             </Pressable>
           ) : isLoadingRecommendation ? (
-            <ThemedView type="backgroundElement" style={[styles.card, styles.centered]}>
-              <ActivityIndicator color={theme.text} />
+            <ThemedView
+              type="backgroundElement"
+              style={[styles.card, styles.centered, { borderColor: theme.border }]}>
+              <ActivityIndicator color={theme.accent} />
               <ThemedText type="default" themeColor="textSecondary">
                 Finding today&apos;s outfit…
               </ThemedText>
             </ThemedView>
           ) : recommendationError ? (
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="small" style={styles.errorText}>
+            <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
+              <ThemedText type="small" themeColor="negative">
                 {recommendationError}
               </ThemedText>
               <Pressable
@@ -245,8 +256,11 @@ export default function HomeScreen() {
               </Pressable>
             </ThemedView>
           ) : isRecommendationOffline && !run ? (
-            <ThemedView type="backgroundElement" style={styles.card} testID="home-recommendation-offline-empty">
-              <ThemedText type="small" style={styles.offlineBadge}>
+            <ThemedView
+              type="backgroundElement"
+              style={[styles.card, { borderColor: theme.border }]}
+              testID="home-recommendation-offline-empty">
+              <ThemedText type="small" themeColor="negative">
                 Offline — no cached recommendation yet
               </ThemedText>
             </ThemedView>
@@ -255,7 +269,7 @@ export default function HomeScreen() {
               {isRecommendationOffline || isRecommendationFromCache ? (
                 <ThemedText
                   type="small"
-                  style={isRecommendationOffline ? styles.offlineBadge : styles.cacheBadge}
+                  themeColor={isRecommendationOffline ? 'negative' : 'accent'}
                   testID="recommendation-cache-badge">
                   {isRecommendationOffline ? 'Offline — showing saved recommendation' : 'Showing cached recommendation'}
                 </ThemedText>
@@ -270,7 +284,7 @@ export default function HomeScreen() {
                 isSubmittingFeedback={isSubmittingFeedback}
                 testID="outfit-main"
               />
-              <ThemedText type="smallBold" themeColor="textSecondary">
+              <ThemedText type="label" themeColor="textSecondary" style={styles.sectionLabel}>
                 Alternatives
               </ThemedText>
               <OutfitCard
@@ -297,9 +311,11 @@ export default function HomeScreen() {
           ) : null}
 
           <Pressable onPress={() => setShowContextManager(true)} testID="home-context-card">
-            <ThemedView type="backgroundElement" style={styles.card}>
+            <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
               {(isOffline || isFromCache) && (
-                <ThemedText type="small" style={isOffline ? styles.offlineBadge : styles.cacheBadge}>
+                <ThemedText
+                  type="small"
+                  themeColor={isOffline ? 'negative' : 'accent'}>
                   {isOffline ? 'Offline — showing saved data' : 'Showing cached data'}
                 </ThemedText>
               )}
@@ -335,11 +351,11 @@ export default function HomeScreen() {
           )}
 
           <Pressable onPress={() => router.push('/wardrobe')} testID="home-wardrobe-link">
-            <ThemedView type="backgroundElement" style={styles.card}>
+            <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
               {isWardrobeOffline || isWardrobeFromCache ? (
                 <ThemedText
                   type="small"
-                  style={isWardrobeOffline ? styles.offlineBadge : styles.cacheBadge}
+                  themeColor={isWardrobeOffline ? 'negative' : 'accent'}
                   testID="wardrobe-cache-badge">
                   {isWardrobeOffline ? 'Offline — showing saved data' : 'Showing cached data'}
                 </ThemedText>
@@ -353,7 +369,7 @@ export default function HomeScreen() {
           </Pressable>
 
           <Pressable onPress={() => setShowHistory(true)} testID="home-history-link">
-            <ThemedView type="backgroundElement" style={styles.card}>
+            <ThemedView type="backgroundElement" style={[styles.card, { borderColor: theme.border }]}>
               <ThemedText type="default" themeColor="textSecondary">
                 History — past recommendations, favorites, and worn outfits.
               </ThemedText>
@@ -382,24 +398,18 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 32,
-    lineHeight: 40,
+    marginTop: Spacing.half,
+  },
+  sectionLabel: {
+    marginTop: Spacing.one,
   },
   card: {
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.four,
     gap: Spacing.one,
   },
   centered: {
     alignItems: 'center',
-  },
-  offlineBadge: {
-    color: '#ef4444',
-  },
-  cacheBadge: {
-    color: '#f59e0b',
-  },
-  errorText: {
-    color: '#ef4444',
   },
 });

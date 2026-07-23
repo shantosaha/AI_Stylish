@@ -6,7 +6,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View }
 import { apiClient } from '@/api/client';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Fonts, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/state/auth-store';
 
@@ -77,7 +77,7 @@ export function AssistantScreen({
         {QUICK_PROMPTS.map((prompt) => (
           <Pressable
             key={prompt}
-            style={styles.quickPrompt}
+            style={[styles.quickPrompt, { borderColor: theme.border }]}
             onPress={() => send(prompt)}
             disabled={isSending}
             testID={`assistant-quick-${prompt.toLowerCase().replace(/\s+/g, '-')}`}>
@@ -91,26 +91,32 @@ export function AssistantScreen({
           <ThemedView
             key={i}
             type="backgroundElement"
-            style={[styles.bubble, message.role === 'user' && styles.bubbleUser]}>
-            <ThemedText type="small">{message.text}</ThemedText>
+            style={[
+              styles.bubble,
+              { borderColor: theme.border },
+              message.role === 'user' && [styles.bubbleUser, { backgroundColor: theme.accent, borderColor: theme.accent }],
+            ]}>
+            <ThemedText type="small" themeColor={message.role === 'user' ? 'accentText' : 'text'}>
+              {message.text}
+            </ThemedText>
           </ThemedView>
         ))}
         {isSending ? (
           <View style={styles.centered} testID="assistant-sending">
-            <ActivityIndicator color={theme.text} size="small" />
+            <ActivityIndicator color={theme.accent} size="small" />
           </View>
         ) : null}
       </ScrollView>
 
       {error ? (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="negative">
           {error}
         </ThemedText>
       ) : null}
 
       <View style={styles.inputRow}>
         <TextInput
-          style={[styles.input, { color: theme.text }]}
+          style={[styles.input, { color: theme.text, borderColor: theme.border }]}
           placeholder="Ask for a change…"
           placeholderTextColor={theme.textSecondary}
           value={input}
@@ -119,11 +125,11 @@ export function AssistantScreen({
           testID="assistant-input"
         />
         <Pressable
-          style={styles.sendButton}
+          style={[styles.sendButton, { backgroundColor: theme.accent }]}
           onPress={() => send(input)}
           disabled={isSending || !input.trim()}
           testID="assistant-send">
-          <ThemedText type="default" style={styles.sendButtonText}>
+          <ThemedText type="default" style={[styles.sendButtonText, { color: theme.accentText }]}>
             Send
           </ThemedText>
         </Pressable>
@@ -142,7 +148,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    lineHeight: 36,
+    lineHeight: 34,
   },
   quickPromptRow: {
     flexDirection: 'row',
@@ -150,10 +156,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   quickPrompt: {
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.four,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-    backgroundColor: '#ffffff10',
   },
   thread: {
     maxHeight: 320,
@@ -163,13 +169,13 @@ const styles = StyleSheet.create({
   },
   bubble: {
     borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.two,
     alignSelf: 'flex-start',
     maxWidth: '85%',
   },
   bubbleUser: {
     alignSelf: 'flex-end',
-    backgroundColor: '#2563eb40',
   },
   centered: {
     alignItems: 'center',
@@ -180,25 +186,21 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   input: {
+    fontFamily: Fonts.sans,
     flex: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
     fontSize: 16,
-    backgroundColor: '#ffffff10',
   },
   sendButton: {
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
     paddingHorizontal: Spacing.four,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#2563eb',
   },
   sendButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  error: {
-    color: '#ef4444',
+    fontFamily: Fonts.sansSemiBold,
   },
 });

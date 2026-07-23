@@ -7,7 +7,8 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { ItemForm, ItemFormValues } from '@/components/wardrobe/item-form';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Fonts, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/state/auth-store';
 import { PickedImage, useWardrobeStore } from '@/state/wardrobe-store';
 
@@ -26,6 +27,7 @@ function itemToFormValues(item: WardrobeItem): ItemFormValues {
 }
 
 export function AddItemScreen({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
+  const theme = useTheme();
   const token = useAuthStore((s) => s.token);
   const createItem = useWardrobeStore((s) => s.createItem);
   const updateItem = useWardrobeStore((s) => s.updateItem);
@@ -107,21 +109,21 @@ export function AddItemScreen({ onDone, onCancel }: { onDone: () => void; onCanc
         </ThemedText>
 
         {uploadError ? (
-          <ThemedText type="small" style={styles.error}>
+          <ThemedText type="small" themeColor="negative">
             {uploadError}
           </ThemedText>
         ) : null}
 
         <Pressable
-          style={styles.primaryButton}
+          style={[styles.primaryButton, { backgroundColor: theme.accent }]}
           onPress={() => pickAndUpload(true)}
           testID="add-item-camera">
-          <ThemedText type="default" style={styles.primaryButtonText}>
+          <ThemedText type="default" style={[styles.primaryButtonText, { color: theme.accentText }]}>
             Take photo
           </ThemedText>
         </Pressable>
         <Pressable
-          style={styles.secondaryButton}
+          style={[styles.secondaryButton, { borderColor: theme.border }]}
           onPress={() => pickAndUpload(false)}
           testID="add-item-library">
           <ThemedText type="default" style={styles.secondaryButtonText}>
@@ -157,7 +159,7 @@ export function AddItemScreen({ onDone, onCancel }: { onDone: () => void; onCanc
         Confirm details
       </ThemedText>
       {pickedImage ? <Image source={{ uri: pickedImage.uri }} style={styles.previewLarge} /> : null}
-      <ThemedView type="backgroundElement" style={styles.notice}>
+      <ThemedView type="backgroundElement" style={[styles.notice, { borderColor: theme.border }]}>
         <ThemedText type="small" themeColor="textSecondary">
           We took a first guess at these details. Please check and correct them.
         </ThemedText>
@@ -166,14 +168,14 @@ export function AddItemScreen({ onDone, onCancel }: { onDone: () => void; onCanc
       <ItemForm values={form} onChange={setForm} disabled={isSaving} />
 
       <Pressable
-        style={[styles.primaryButton, isSaving && styles.disabled]}
+        style={[styles.primaryButton, { backgroundColor: theme.accent }, isSaving && styles.disabled]}
         onPress={handleSave}
         disabled={isSaving}
         testID="add-item-save">
         {isSaving ? (
-          <ActivityIndicator color="#ffffff" />
+          <ActivityIndicator color={theme.accentText} />
         ) : (
-          <ThemedText type="default" style={styles.primaryButtonText}>
+          <ThemedText type="default" style={[styles.primaryButtonText, { color: theme.accentText }]}>
             Save to wardrobe
           </ThemedText>
         )}
@@ -197,42 +199,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 32,
-    lineHeight: 40,
+    fontSize: 28,
+    lineHeight: 34,
   },
   previewLarge: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: Spacing.three,
+    borderRadius: Spacing.two,
   },
   notice: {
     borderRadius: Spacing.two,
+    borderWidth: 1,
     padding: Spacing.three,
   },
   primaryButton: {
-    backgroundColor: '#2563eb',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
     paddingVertical: Spacing.three,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
+    fontFamily: Fonts.sansSemiBold,
   },
   secondaryButton: {
-    backgroundColor: '#ffffff10',
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.one,
+    borderWidth: 1,
     paddingVertical: Spacing.three,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    fontWeight: '600',
+    fontFamily: Fonts.sansSemiBold,
   },
   disabled: {
     opacity: 0.6,
-  },
-  error: {
-    color: '#ef4444',
   },
   cancelLink: {
     alignItems: 'center',
