@@ -158,6 +158,48 @@ wardrobe, built from real weather/formality context, with a user-correctable fee
   owns, shown as real photos together (never text-only), with weather/formality explanation tags and a
   user feedback loop — verified end-to-end via curl and in-browser
 
+## Phase 6: Preview quality
+
+Current status: Complete. Every outfit now renders in all 4 canonical preview modes, switchable from a
+detail view opened off any recommendation card.
+
+- ✅ `POST /preview/generate` (`outfit_id`, `preview_type`, optional `force_refresh`) and
+  `GET /preview/{outfit_id}` — backed by a new `preview_assets` table (`documents/04` naming exactly,
+  no `user_id` column since ownership flows through `outfit_id` in the canonical schema too)
+- ✅ `preview_generator.py`: the compositing seam — `compose_mannequin` draws a flat, schematic
+  body-shaped silhouette (no face implied) and pastes each garment photo into its body region;
+  `compose_collage` overlays a flat-lay item strip on the user's own primary body photo when one exists,
+  or a neutral background otherwise — a missing body photo never blocks the preview; `compose_realistic`
+  always reports `status: failed` with a human-readable reason, since no cloud realistic-preview provider
+  is wired yet (that decision is explicitly deferred to Phase 9 per `IMPLEMENTATION_PLAN.md` §8) —
+  exactly the degrade-gracefully behavior `CLAUDE.md` requires, never presented as the only path
+- ✅ `combined_card` (the Phase 5 baseline) needs no server-side compositing — a preview-asset row is
+  still created so all 4 modes share one status contract, but it just points back at the wardrobe photos
+  the client already has
+- ✅ Real, local PIL compositing (no external services) — verified against actual pasted garment photos,
+  not just placeholder colors, producing correctly positioned, correctly sized composite PNGs
+- ✅ Outfit detail screen (opened via "View preview modes" on any outfit card, component-toggle per the
+  established Home-screen pattern) with a 4-way mode switcher; mannequin/collage show a loading state
+  while generating, then the real composited image; realistic mode shows its fallback reason and
+  automatically fetches + displays the collage image underneath it, so the user is never shown nothing
+- ✅ Fixed a stale-documentation gap found while building this phase: `infra/db/0001_baseline.sql`'s
+  `outfits`/`recommendation_runs`/`outfit_history` table definitions were still the original Phase-0
+  stubs and had never been updated to match the real Phase 5 SQLAlchemy models (unlike Phase 4's tables,
+  which were kept in sync) — brought all four tables (including the new `preview_assets`) in line with
+  the actual models in this phase
+- ✅ Verified end-to-end via curl: all 4 preview types generated for a real outfit, composited PNGs
+  fetched and visually confirmed (garment colors correctly positioned in mannequin body regions; collage
+  correctly falling back to a neutral background with no body photo, then correctly compositing over a
+  real body photo once one was uploaded); realistic mode's graceful-degradation payload
+- ✅ Verified end-to-end in-browser: opened a recommendation's detail view, switched through all 4 modes,
+  confirmed each renders the correct content (including the realistic-mode fallback banner + collage
+  image), and navigated back to Home cleanly — zero console errors throughout
+
+### Exit Criteria
+- ✅ User can switch preview modes on a given recommendation and see all of them render — verified
+  end-to-end via curl and in-browser for combined_card, mannequin, collage, and realistic (the last via
+  its required graceful-degradation fallback, never as a dead end)
+
 ## Getting Started
 
 ### Install dependencies

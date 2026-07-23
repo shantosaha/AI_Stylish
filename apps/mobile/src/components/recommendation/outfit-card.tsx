@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 
-function ItemThumbnail({ item }: { item: WardrobeItem | null }) {
+export function ItemThumbnail({ item }: { item: WardrobeItem | null }) {
   if (!item) return null;
   const primaryImage = item.images.find((img) => img.is_primary) ?? item.images[0];
   return (
@@ -30,12 +30,14 @@ export function OutfitCard({
   label,
   outfit,
   onFeedback,
+  onViewDetails,
   isSubmittingFeedback,
   testID,
 }: {
   label: string;
   outfit: Outfit;
   onFeedback: (feedbackCode: OutfitFeedback) => void;
+  onViewDetails?: () => void;
   isSubmittingFeedback?: boolean;
   testID?: string;
 }) {
@@ -71,6 +73,12 @@ export function OutfitCard({
             </View>
           ))}
         </View>
+      ) : null}
+
+      {onViewDetails ? (
+        <Pressable onPress={onViewDetails} testID={`${testID}-view-details`}>
+          <ThemedText type="linkPrimary">View preview modes</ThemedText>
+        </Pressable>
       ) : null}
 
       <View style={styles.feedbackRow}>

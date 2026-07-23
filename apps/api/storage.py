@@ -28,3 +28,7 @@ def save_wardrobe_image(user_id: str, item_id: str, filename: str, content: byte
 
 def save_body_image(user_id: str, filename: str, content: bytes) -> str:
     return _save_image("body", user_id, filename, content)
+
+
+def save_preview_image(user_id: str, outfit_id: str, preview_type: str, content: bytes) -> str:
+    return _save_image("previews", f"{user_id}/{outfit_id}", f"{preview_type}.png", content)

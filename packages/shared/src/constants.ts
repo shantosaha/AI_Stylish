@@ -42,6 +42,7 @@ export const API_ENDPOINTS = {
 
   // Preview
   PREVIEW_GENERATE: '/preview/generate',
+  PREVIEW_LIST: (outfitId: string) => `/preview/${outfitId}`,
 
   // History
   HISTORY: '/history',

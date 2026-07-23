@@ -258,5 +258,25 @@ class OutfitFeedbackOut(BaseModel):
     worn_at: Optional[datetime] = None
     created_at: datetime
 
+
+PreviewType = Literal["combined_card", "mannequin", "collage", "realistic"]
+PreviewStatus = Literal["pending", "running", "ready", "failed"]
+
+
+class PreviewGenerateRequest(BaseModel):
+    outfit_id: str
+    preview_type: PreviewType
+    force_refresh: bool = False
+
+
+class PreviewAssetOut(BaseModel):
+    id: str
+    outfit_id: str
+    preview_type: PreviewType
+    local_uri: Optional[str] = None
+    status: PreviewStatus
+    metadata: dict[str, Any] = {}
+    created_at: datetime
+
     class Config:
         from_attributes = True

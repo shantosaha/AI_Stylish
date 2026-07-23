@@ -195,12 +195,23 @@ export interface SubmitOutfitFeedbackRequest {
 }
 
 // Preview DTOs
+export type PreviewType = 'combined_card' | 'mannequin' | 'collage' | 'realistic';
+export type PreviewStatus = 'pending' | 'running' | 'ready' | 'failed';
+
 export interface PreviewAsset {
   id: string;
   outfit_id: string;
-  preview_type: 'card' | 'mannequin' | 'collage' | 'realistic';
-  image_url: string;
+  preview_type: PreviewType;
+  local_uri: string | null;
+  status: PreviewStatus;
+  metadata: Record<string, unknown>;
   created_at: string;
+}
+
+export interface GeneratePreviewRequest {
+  outfit_id: string;
+  preview_type: PreviewType;
+  force_refresh?: boolean;
 }
 
 // History DTOs

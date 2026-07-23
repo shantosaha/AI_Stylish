@@ -1,3 +1,4 @@
+import type { Outfit } from '@ai-stylish/shared';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -6,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ContextManagerContent } from '@/components/context/context-manager-content';
 import { OutfitCard } from '@/components/recommendation/outfit-card';
+import { OutfitDetailScreen } from '@/components/recommendation/outfit-detail-screen';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -41,6 +43,7 @@ export default function HomeScreen() {
   const [showContextManager, setShowContextManager] = useState(false);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const [hasRequestedRecommendation, setHasRequestedRecommendation] = useState(false);
+  const [selectedOutfit, setSelectedOutfit] = useState<{ label: string; outfit: Outfit } | null>(null);
 
   const hasTop = items.some((i) => i.category === 'tops');
   const hasBottom = items.some((i) => i.category === 'bottoms');
@@ -107,6 +110,22 @@ export default function HomeScreen() {
     );
   }
 
+  if (selectedOutfit) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <OutfitDetailScreen
+              label={selectedOutfit.label}
+              outfit={selectedOutfit.outfit}
+              onBack={() => setSelectedOutfit(null)}
+            />
+          </ScrollView>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
   const nextEvent = snapshot?.events[0];
 
   return (
@@ -150,6 +169,7 @@ export default function HomeScreen() {
                 label="Today's pick"
                 outfit={run.main_outfit}
                 onFeedback={(code) => token && submitFeedback(token, run.main_outfit.id, code).catch(() => {})}
+                onViewDetails={() => setSelectedOutfit({ label: "Today's pick", outfit: run.main_outfit })}
                 isSubmittingFeedback={isSubmittingFeedback}
                 testID="outfit-main"
               />
@@ -162,6 +182,7 @@ export default function HomeScreen() {
                 onFeedback={(code) =>
                   token && submitFeedback(token, run.alt_outfit_1.id, code).catch(() => {})
                 }
+                onViewDetails={() => setSelectedOutfit({ label: 'Alternative 1', outfit: run.alt_outfit_1 })}
                 isSubmittingFeedback={isSubmittingFeedback}
                 testID="outfit-alt1"
               />
@@ -171,6 +192,7 @@ export default function HomeScreen() {
                 onFeedback={(code) =>
                   token && submitFeedback(token, run.alt_outfit_2.id, code).catch(() => {})
                 }
+                onViewDetails={() => setSelectedOutfit({ label: 'Alternative 2', outfit: run.alt_outfit_2 })}
                 isSubmittingFeedback={isSubmittingFeedback}
                 testID="outfit-alt2"
               />

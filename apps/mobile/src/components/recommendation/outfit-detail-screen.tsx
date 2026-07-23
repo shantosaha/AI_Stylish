@@ -1,0 +1,195 @@
+import type { Outfit, PreviewType } from '@ai-stylish/shared';
+import { Image } from 'expo-image';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+
+import { resolveMediaUrl } from '@/api/client';
+import { ItemThumbnail } from '@/components/recommendation/outfit-card';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useAuthStore } from '@/state/auth-store';
+import { usePreviewStore } from '@/state/preview-store';
+
+const MODES: { type: PreviewType; label: string }[] = [
+  { type: 'combined_card', label: 'Item card' },
+  { type: 'mannequin', label: 'Mannequin' },
+  { type: 'collage', label: 'Collage' },
+  { type: 'realistic', label: 'Realistic' },
+];
+
+export function OutfitDetailScreen({
+  label,
+  outfit,
+  onBack,
+}: {
+  label: string;
+  outfit: Outfit;
+  onBack: () => void;
+}) {
+  const theme = useTheme();
+  const token = useAuthStore((s) => s.token);
+  const assetsForOutfit = usePreviewStore((s) => s.assets[outfit.id]);
+  const loadingKey = usePreviewStore((s) => s.loadingKey);
+  const error = usePreviewStore((s) => s.error);
+  const generate = usePreviewStore((s) => s.generate);
+
+  const [mode, setMode] = useState<PreviewType>('combined_card');
+
+  const asset = assetsForOutfit?.[mode];
+  const isLoading = loadingKey === `${outfit.id}:${mode}`;
+  const collageAsset = assetsForOutfit?.collage;
+
+  useEffect(() => {
+    if (!token || mode === 'combined_card' || asset) return;
+    generate(token, outfit.id, mode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, mode, outfit.id, asset]);
+
+  useEffect(() => {
+    if (!token) return;
+    if (mode === 'realistic' && asset?.status === 'failed' && !collageAsset) {
+      generate(token, outfit.id, 'collage');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, mode, asset?.status, outfit.id, collageAsset]);
+
+  const items = [outfit.top, outfit.bottom, outfit.outerwear, outfit.shoes].filter(
+    (item): item is NonNullable<typeof item> => item !== null
+  );
+
+  return (
+    <View style={styles.container}>
+      <Pressable onPress={onBack} style={styles.backLink} testID="outfit-detail-back">
+        <ThemedText type="linkPrimary">← Back</ThemedText>
+      </Pressable>
+
+      <ThemedText type="title" style={styles.title}>
+        {label}
+      </ThemedText>
+
+      <View style={styles.modeRow}>
+        {MODES.map((m) => (
+          <Pressable
+            key={m.type}
+            onPress={() => setMode(m.type)}
+            style={[styles.modeButton, mode === m.type && styles.modeButtonActive]}
+            testID={`preview-mode-${m.type}`}>
+            <ThemedText type="small">{m.label}</ThemedText>
+          </Pressable>
+        ))}
+      </View>
+
+      <ThemedView type="backgroundElement" style={styles.previewArea}>
+        {mode === 'combined_card' ? (
+          <View style={styles.itemRow} testID="preview-combined-card">
+            {items.map((item) => (
+              <ItemThumbnail key={item.id} item={item} />
+            ))}
+          </View>
+        ) : isLoading ? (
+          <View style={styles.centered} testID="preview-loading">
+            <ActivityIndicator color={theme.text} />
+            <ThemedText type="small" themeColor="textSecondary">
+              Generating preview…
+            </ThemedText>
+          </View>
+        ) : mode === 'realistic' && asset?.status === 'failed' ? (
+          <View testID="preview-fallback-notice">
+            <ThemedText type="small" themeColor="textSecondary" style={styles.notice}>
+              {(asset.metadata.reason as string | undefined) ??
+                'Realistic preview is not available yet. Showing the collage preview instead.'}
+            </ThemedText>
+            {collageAsset?.local_uri ? (
+              <Image
+                source={{ uri: resolveMediaUrl(collageAsset.local_uri) }}
+                style={styles.previewImage}
+                testID="preview-image"
+              />
+            ) : (
+              <View style={styles.itemRow}>
+                {items.map((item) => (
+                  <ItemThumbnail key={item.id} item={item} />
+                ))}
+              </View>
+            )}
+          </View>
+        ) : asset?.local_uri ? (
+          <Image
+            source={{ uri: resolveMediaUrl(asset.local_uri) }}
+            style={styles.previewImage}
+            testID="preview-image"
+          />
+        ) : (
+          <ThemedText type="small" themeColor="textSecondary">
+            Preview not available.
+          </ThemedText>
+        )}
+      </ThemedView>
+
+      {error ? (
+        <ThemedText type="small" style={styles.error}>
+          {error}
+        </ThemedText>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    gap: Spacing.three,
+  },
+  backLink: {
+    paddingVertical: Spacing.one,
+  },
+  title: {
+    fontSize: 28,
+    lineHeight: 36,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    flexWrap: 'wrap',
+  },
+  modeButton: {
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    backgroundColor: '#ffffff10',
+  },
+  modeButtonActive: {
+    backgroundColor: '#2563eb40',
+  },
+  previewArea: {
+    borderRadius: Spacing.three,
+    padding: Spacing.four,
+    minHeight: 320,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centered: {
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  previewImage: {
+    width: 280,
+    height: 373,
+    borderRadius: Spacing.two,
+  },
+  notice: {
+    marginBottom: Spacing.three,
+    textAlign: 'center',
+  },
+  error: {
+    color: '#ef4444',
+  },
+});

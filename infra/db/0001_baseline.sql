@@ -142,45 +142,58 @@ CREATE TABLE weather_cache (
 );
 CREATE INDEX idx_weather_cache_user_fetch ON weather_cache(user_id, fetched_at DESC);
 
--- Outfits (combinations of wardrobe items)
+-- Outfits (combinations of wardrobe items). Field names/FKs match
+-- documents/04's canonical DDL (top/bottom/outerwear/shoe_item_id slots,
+-- not a wardrobe_item_ids array); user_id kept per the drift note above
+-- rather than the doc's user_profile_id.
 CREATE TABLE outfits (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  wardrobe_item_ids UUID[] NOT NULL,
-  score FLOAT DEFAULT 0.0,
-  explanation TEXT,
-  tags VARCHAR(255)[],
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  top_item_id UUID REFERENCES wardrobe_items(id) ON DELETE SET NULL,
+  bottom_item_id UUID REFERENCES wardrobe_items(id) ON DELETE SET NULL,
+  outerwear_item_id UUID REFERENCES wardrobe_items(id) ON DELETE SET NULL,
+  shoe_item_id UUID REFERENCES wardrobe_items(id) ON DELETE SET NULL,
+  accessory_item_ids_json JSONB NOT NULL DEFAULT '[]', -- always empty through Phase 6
+  score NUMERIC(7,2) DEFAULT 0.0,
+  explanation_tags_json JSONB NOT NULL DEFAULT '[]',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX idx_outfits_user_created ON outfits(user_id, created_at DESC);
 
 -- Recommendation runs (snapshot of one recommendation session with 3 outfits)
 CREATE TABLE recommendation_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  context JSONB NOT NULL, -- weather, events, routine, location snapshot
-  main_outfit_id UUID NOT NULL REFERENCES outfits(id),
-  alt_outfit_1_id UUID NOT NULL REFERENCES outfits(id),
-  alt_outfit_2_id UUID NOT NULL REFERENCES outfits(id),
+  context_snapshot_json JSONB NOT NULL DEFAULT '{}', -- weather, events, routine, location snapshot
+  main_outfit_id UUID REFERENCES outfits(id) ON DELETE SET NULL,
+  alt_1_outfit_id UUID REFERENCES outfits(id) ON DELETE SET NULL,
+  alt_2_outfit_id UUID REFERENCES outfits(id) ON DELETE SET NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX idx_recommendation_runs_user_created ON recommendation_runs(user_id, created_at DESC);
 
 -- Outfit history (worn/liked/skipped feedback, separate from runs)
 CREATE TABLE outfit_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  outfit_id UUID NOT NULL REFERENCES outfits(id),
-  recommendation_run_id UUID REFERENCES recommendation_runs(id),
-  feedback VARCHAR(50), -- liked, worn, skipped, neutral
-  worn_date DATE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  outfit_id UUID NOT NULL REFERENCES outfits(id) ON DELETE CASCADE,
+  recommendation_run_id UUID REFERENCES recommendation_runs(id) ON DELETE SET NULL,
+  feedback_code VARCHAR(50), -- like, worn, favorite, too_hot, too_cold, too_formal, too_casual, not_my_style, skip
+  is_favorite BOOLEAN DEFAULT FALSE,
+  worn_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Preview assets (rendered outfit previews)
+-- Preview assets (rendered outfit previews). No user_id column, same as
+-- documents/04's canonical DDL - ownership flows through outfit_id.
 CREATE TABLE preview_assets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   outfit_id UUID NOT NULL REFERENCES outfits(id) ON DELETE CASCADE,
-  preview_type VARCHAR(50) NOT NULL, -- card, mannequin, collage, realistic
-  image_url VARCHAR(1024) NOT NULL,
+  preview_type VARCHAR(50) NOT NULL, -- combined_card, mannequin, collage, realistic
+  local_uri VARCHAR(1024),
+  cloud_uri VARCHAR(1024),
+  status VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, running, ready, failed
+  metadata_json JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -201,7 +214,7 @@ CREATE TABLE sync_queue (
 CREATE INDEX idx_wardrobe_items_user ON wardrobe_items(user_id);
 CREATE INDEX idx_body_images_user ON body_images(user_id);
 CREATE INDEX idx_body_analysis_results_user ON body_analysis_results(user_id);
-CREATE INDEX idx_recommendation_runs_user ON recommendation_runs(user_id);
 CREATE INDEX idx_outfit_history_user ON outfit_history(user_id);
+CREATE INDEX idx_preview_assets_outfit ON preview_assets(outfit_id);
 CREATE INDEX idx_sync_queue_user ON sync_queue(user_id);
 CREATE INDEX idx_sync_queue_synced ON sync_queue(is_synced);

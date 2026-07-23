@@ -198,6 +198,19 @@ class RecommendationRun(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class PreviewAsset(Base):
+    __tablename__ = "preview_assets"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    outfit_id = Column(String(36), ForeignKey("outfits.id", ondelete="CASCADE"), nullable=False, index=True)
+    preview_type = Column(String(50), nullable=False)  # combined_card, mannequin, collage, realistic
+    local_uri = Column(String(1024), nullable=True)
+    cloud_uri = Column(String(1024), nullable=True)
+    status = Column(String(50), default="pending")  # pending, running, ready, failed
+    metadata_json = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class OutfitHistory(Base):
     __tablename__ = "outfit_history"
 
