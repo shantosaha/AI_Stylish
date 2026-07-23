@@ -21,6 +21,7 @@ function itemToFormValues(item: WardrobeItem): ItemFormValues {
     pattern: item.pattern ?? '',
     material: item.material ?? '',
     brand: item.brand ?? '',
+    formality: item.formality ?? '',
   };
 }
 
@@ -78,7 +79,7 @@ export function AddItemScreen({ onDone, onCancel }: { onDone: () => void; onCanc
     if (!token || !createdItem || !form) return;
     setIsSaving(true);
     try {
-      await updateItem(token, createdItem.id, form);
+      await updateItem(token, createdItem.id, { ...form, formality: form.formality || undefined });
       onDone();
     } catch {
       // error surfaced via the wardrobe store's error state below

@@ -120,6 +120,44 @@ Current status: Complete. Weather, calendar events, and routines all feed into a
 - ✅ `/context/today` returns a real weather + event + routine snapshot, cached for offline reuse
   (verified end-to-end in-browser and via curl, including simulated network failure and recovery)
 
+## Phase 5: Recommendation engine — guaranteed baseline
+
+Current status: Complete. Rule-based scoring produces 1 best outfit + 2 alternatives from the user's own
+wardrobe, built from real weather/formality context, with a user-correctable feedback loop.
+
+- ✅ `POST /recommendations/today?lat=&lon=` — hard-filters the active wardrobe down to tops/bottoms/shoes
+  (+ optional outerwear), builds 3 distinct-ish candidates via cheap diagonal pairing (rank-i top with
+  rank-i bottom with rank-i shoes, index capped for small wardrobes), scores each on temperature and
+  formality match, and persists the run plus all 3 outfits; 400 if the wardrobe lacks a top, bottom, or
+  pair of shoes
+- ✅ `POST /recommendations/{run_id}/feedback` — records like/worn/skip/etc. against one of the run's 3
+  outfits; 404 if the run isn't owned by the caller, 400 if the outfit isn't one of the run's 3
+- ✅ `recommender.py`: the scoring seam — `resolve_target_formality` picks the highest-formality event of
+  the day, `score_item` adds/subtracts for outerwear-in-cold and formality-distance, every score-affecting
+  factor emits a human-readable `explanation_tag` rather than a silent number
+- ✅ Rule-based hard filtering first, exactly as specified — no ML ranking path, no accessory selection,
+  no repeat-avoidance logic; all explicitly deferred and commented in code as out of scope for the
+  guaranteed baseline
+- ✅ Added the `formality` field to wardrobe items (present in the canonical schema but missing since
+  Phase 2) with a 3-way casual/business/formal picker in the item form, feeding the scorer directly
+- ✅ Home screen auto-generates today's recommendation once the wardrobe has enough items, showing the
+  real wardrobe photos for the main pick and both alternatives together — never a text-only list — with
+  inline Like/Worn it/Skip feedback per outfit and empty/loading/error states
+- ✅ Verified end-to-end via curl: empty-wardrobe 400, hand-checked scoring math for temperature and
+  formality adjustments, explanation tag generation, and both feedback validation paths (400 wrong
+  outfit, 404 wrong run)
+- ✅ Verified end-to-end in-browser: empty state → building a wardrobe → auto-generated recommendation
+  with real photos for all 3 outfits, formality picker, feedback buttons, and — after tracking down a
+  test-data seeding bug where a directly-inserted SQLite row used a `T`-separated datetime that sorted
+  incorrectly against SQLAlchemy's space-separated format — confirmed both the weather tag ("Good for
+  today's 5°C weather") and the formality tag ("Matches today's business dress code") render correctly
+  on every outfit card when real context exists, with zero console errors throughout
+
+### Exit Criteria
+- ✅ Recommendations are always 1 best outfit + 2 alternatives, built only from wardrobe items the user
+  owns, shown as real photos together (never text-only), with weather/formality explanation tags and a
+  user feedback loop — verified end-to-end via curl and in-browser
+
 ## Getting Started
 
 ### Install dependencies

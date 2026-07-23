@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 
 import models
 from database import Base, engine
-from routers import auth, body, calendar_events, context, profile, routines, wardrobe
+from routers import auth, body, calendar_events, context, profile, recommendations, routines, wardrobe
 from storage import MEDIA_ROOT
 
 Base.metadata.create_all(bind=engine)
@@ -32,6 +32,7 @@ app.include_router(body.router)
 app.include_router(context.router)
 app.include_router(calendar_events.router)
 app.include_router(routines.router)
+app.include_router(recommendations.router)
 
 app.mount("/media", StaticFiles(directory=MEDIA_ROOT), name="media")
 

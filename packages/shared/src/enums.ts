@@ -21,9 +21,15 @@ export enum TaskStatus {
   FAILED = 'failed',
 }
 
+// Matches documents/04's canonical feedback_code enum.
 export enum OutfitFeedback {
-  LIKED = 'liked',
+  LIKE = 'like',
   WORN = 'worn',
-  SKIPPED = 'skipped',
-  NEUTRAL = 'neutral',
+  FAVORITE = 'favorite',
+  TOO_HOT = 'too_hot',
+  TOO_COLD = 'too_cold',
+  TOO_FORMAL = 'too_formal',
+  TOO_CASUAL = 'too_casual',
+  NOT_MY_STYLE = 'not_my_style',
+  SKIP = 'skip',
 }

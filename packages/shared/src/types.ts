@@ -50,6 +50,8 @@ export interface ItemAnalysisResult {
   detected_brand: string | null;
 }
 
+export type Formality = 'casual' | 'business' | 'formal';
+
 export interface WardrobeItem {
   id: string;
   category: WardrobeItemCategory;
@@ -58,6 +60,7 @@ export interface WardrobeItem {
   pattern: string | null;
   material: string | null;
   brand: string | null;
+  formality: Formality | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -165,20 +168,30 @@ export interface CreateRoutineRequest {
 // Recommendation DTOs
 export interface Outfit {
   id: string;
-  wardrobe_item_ids: string[];
+  top: WardrobeItem | null;
+  bottom: WardrobeItem | null;
+  outerwear: WardrobeItem | null;
+  shoes: WardrobeItem | null;
+  accessories: WardrobeItem[];
   score: number;
-  explanation?: string;
-  tags?: string[];
+  explanation_tags: string[];
+  created_at: string;
 }
 
 export interface RecommendationRun {
   id: string;
-  user_id: string;
-  context: ContextSnapshot;
-  main_outfit_id: string;
-  alt_outfit_1_id: string;
-  alt_outfit_2_id: string;
+  context_snapshot: Record<string, unknown>;
+  main_outfit: Outfit;
+  alt_outfit_1: Outfit;
+  alt_outfit_2: Outfit;
   created_at: string;
+}
+
+export interface SubmitOutfitFeedbackRequest {
+  outfit_id: string;
+  feedback_code: OutfitFeedback;
+  is_favorite?: boolean;
+  worn_at?: string;
 }
 
 // Preview DTOs
@@ -193,13 +206,12 @@ export interface PreviewAsset {
 // History DTOs
 export interface OutfitHistory {
   id: string;
-  user_id: string;
   outfit_id: string;
-  recommendation_run_id: string;
-  feedback: OutfitFeedback;
-  worn_date?: string;
+  recommendation_run_id: string | null;
+  feedback_code: OutfitFeedback | null;
+  is_favorite: boolean;
+  worn_at: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 // Request DTOs
@@ -240,10 +252,7 @@ export interface UpdateWardrobeItemRequest {
   pattern?: string;
   material?: string;
   brand?: string;
+  formality?: Formality;
   is_active?: boolean;
 }
 
-export interface CreateRecommendationRequest {
-  processing_mode?: ProcessingMode;
-  date?: string;
-}

@@ -38,7 +38,6 @@ export const API_ENDPOINTS = {
 
   // Recommendations
   RECOMMENDATIONS_TODAY: '/recommendations/today',
-  RECOMMENDATIONS_GET: (id: string) => `/recommendations/${id}`,
   RECOMMENDATIONS_FEEDBACK: (id: string) => `/recommendations/${id}/feedback`,
 
   // Preview
@@ -65,10 +64,15 @@ export const WARDROBE_CATEGORY_LABELS = {
 };
 
 export const OUTFIT_FEEDBACK_LABELS = {
-  liked: 'Liked',
+  like: 'Like',
   worn: 'Worn',
-  skipped: 'Skipped',
-  neutral: 'Neutral',
+  favorite: 'Favorite',
+  too_hot: 'Too hot',
+  too_cold: 'Too cold',
+  too_formal: 'Too formal',
+  too_casual: 'Too casual',
+  not_my_style: 'Not my style',
+  skip: 'Skip',
 };
 
 // UI Constants

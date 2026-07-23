@@ -18,6 +18,7 @@ function itemToFormValues(item: WardrobeItem): ItemFormValues {
     pattern: item.pattern ?? '',
     material: item.material ?? '',
     brand: item.brand ?? '',
+    formality: item.formality ?? '',
   };
 }
 
@@ -39,7 +40,7 @@ export function ItemDetailScreen({ item, onBack }: { item: WardrobeItem; onBack:
     setIsSaving(true);
     setError(null);
     try {
-      await updateItem(token, item.id, form);
+      await updateItem(token, item.id, { ...form, formality: form.formality || undefined });
       setSavedNotice(true);
       setTimeout(() => setSavedNotice(false), 1500);
     } catch (e) {

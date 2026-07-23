@@ -75,6 +75,10 @@ class WardrobeItem(Base):
     pattern = Column(String(100), nullable=True)
     material = Column(String(100), nullable=True)
     brand = Column(String(100), nullable=True)
+    # In documents/04's canonical DDL but missing from Phase 2 (added here for Phase 5
+    # scoring, which needs formality/weather hard-filtering per IMPLEMENTATION_PLAN.md #8).
+    # Nullable and unscored when unset - never assumed casual by default.
+    formality = Column(String(50), nullable=True)  # casual, business, formal
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -162,3 +166,48 @@ class WeatherCache(Base):
     fetched_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=True)
     forecast_json = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration
+
+
+class Outfit(Base):
+    __tablename__ = "outfits"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    top_item_id = Column(String(36), ForeignKey("wardrobe_items.id", ondelete="SET NULL"), nullable=True)
+    bottom_item_id = Column(String(36), ForeignKey("wardrobe_items.id", ondelete="SET NULL"), nullable=True)
+    outerwear_item_id = Column(String(36), ForeignKey("wardrobe_items.id", ondelete="SET NULL"), nullable=True)
+    shoe_item_id = Column(String(36), ForeignKey("wardrobe_items.id", ondelete="SET NULL"), nullable=True)
+    # accessories/bags/jewelry unified into one slot per documents/04's canonical
+    # accessory_item_ids_json; always empty in Phase 5 - candidate generation only
+    # picks top/bottom/outerwear/shoes for the guaranteed baseline.
+    accessory_item_ids = Column(Text, default="[]")  # JSON-encoded array of wardrobe_item ids
+    score = Column(Float, default=0.0)
+    explanation_tags = Column(Text, default="[]")  # JSON-encoded array of strings
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class RecommendationRun(Base):
+    __tablename__ = "recommendation_runs"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    context_snapshot = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration
+    main_outfit_id = Column(String(36), ForeignKey("outfits.id", ondelete="SET NULL"), nullable=True)
+    alt_1_outfit_id = Column(String(36), ForeignKey("outfits.id", ondelete="SET NULL"), nullable=True)
+    alt_2_outfit_id = Column(String(36), ForeignKey("outfits.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class OutfitHistory(Base):
+    __tablename__ = "outfit_history"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    outfit_id = Column(String(36), ForeignKey("outfits.id", ondelete="CASCADE"), nullable=False)
+    recommendation_run_id = Column(
+        String(36), ForeignKey("recommendation_runs.id", ondelete="SET NULL"), nullable=True
+    )
+    feedback_code = Column(String(50), nullable=True)  # like, worn, favorite, too_hot, too_cold, ...
+    is_favorite = Column(Boolean, default=False)
+    worn_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

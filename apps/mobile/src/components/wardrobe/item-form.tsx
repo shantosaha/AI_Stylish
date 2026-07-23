@@ -1,4 +1,5 @@
 import { WardrobeItemCategory } from '@ai-stylish/shared';
+import type { Formality } from '@ai-stylish/shared';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -13,6 +14,7 @@ export interface ItemFormValues {
   pattern: string;
   material: string;
   brand: string;
+  formality: Formality | '';
 }
 
 const CATEGORY_OPTIONS: { value: WardrobeItemCategory; label: string }[] = [
@@ -23,6 +25,12 @@ const CATEGORY_OPTIONS: { value: WardrobeItemCategory; label: string }[] = [
   { value: WardrobeItemCategory.ACCESSORIES, label: 'Accessories' },
   { value: WardrobeItemCategory.BAGS, label: 'Bags' },
   { value: WardrobeItemCategory.JEWELRY, label: 'Jewelry' },
+];
+
+const FORMALITY_OPTIONS: { value: Formality; label: string }[] = [
+  { value: 'casual', label: 'Casual' },
+  { value: 'business', label: 'Business' },
+  { value: 'formal', label: 'Formal' },
 ];
 
 interface ItemFormProps {
@@ -123,6 +131,24 @@ export function ItemForm({ values, onChange, disabled }: ItemFormProps) {
         disabled={disabled}
         testID="item-brand"
       />
+
+      <View style={styles.field}>
+        <ThemedText type="smallBold" themeColor="textSecondary">
+          Formality
+        </ThemedText>
+        <View style={styles.formalityRow}>
+          {FORMALITY_OPTIONS.map((option) => (
+            <Pressable
+              key={option.value}
+              style={[styles.formalityOption, values.formality === option.value && styles.formalityOptionSelected]}
+              onPress={() => set('formality', option.value)}
+              disabled={disabled}
+              testID={`item-formality-${option.value}`}>
+              <ThemedText type="small">{option.label}</ThemedText>
+            </Pressable>
+          ))}
+        </View>
+      </View>
     </View>
   );
 }
@@ -150,5 +176,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: Spacing.two,
+  },
+  formalityRow: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+  },
+  formalityOption: {
+    flex: 1,
+    borderRadius: Spacing.two,
+    paddingVertical: Spacing.two,
+    alignItems: 'center',
+    backgroundColor: '#ffffff10',
+  },
+  formalityOptionSelected: {
+    backgroundColor: '#2563eb40',
   },
 });

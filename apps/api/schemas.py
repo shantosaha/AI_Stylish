@@ -7,6 +7,7 @@ ProcessingMode = Literal["auto", "local_preferred", "cloud_preferred"]
 WardrobeCategory = Literal[
     "tops", "bottoms", "outerwear", "shoes", "accessories", "bags", "jewelry"
 ]
+Formality = Literal["casual", "business", "formal"]
 
 
 class SignupRequest(BaseModel):
@@ -84,6 +85,7 @@ class WardrobeItemOut(BaseModel):
     pattern: Optional[str] = None
     material: Optional[str] = None
     brand: Optional[str] = None
+    formality: Optional[Formality] = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -101,6 +103,7 @@ class WardrobeItemUpdate(BaseModel):
     pattern: Optional[str] = None
     material: Optional[str] = None
     brand: Optional[str] = None
+    formality: Optional[Formality] = None
     is_active: Optional[bool] = None
 
 
@@ -211,3 +214,49 @@ class ContextTodayOut(BaseModel):
     events: list[CalendarEventOut] = []
     routine_block: str
     location_provided: bool
+
+
+class OutfitOut(BaseModel):
+    id: str
+    top: Optional[WardrobeItemOut] = None
+    bottom: Optional[WardrobeItemOut] = None
+    outerwear: Optional[WardrobeItemOut] = None
+    shoes: Optional[WardrobeItemOut] = None
+    accessories: list[WardrobeItemOut] = []
+    score: float
+    explanation_tags: list[str] = []
+    created_at: datetime
+
+
+class RecommendationRunOut(BaseModel):
+    id: str
+    context_snapshot: dict[str, Any]
+    main_outfit: OutfitOut
+    alt_outfit_1: OutfitOut
+    alt_outfit_2: OutfitOut
+    created_at: datetime
+
+
+FeedbackCode = Literal[
+    "like", "worn", "favorite", "too_hot", "too_cold", "too_formal", "too_casual", "not_my_style", "skip"
+]
+
+
+class OutfitFeedbackRequest(BaseModel):
+    outfit_id: str
+    feedback_code: FeedbackCode
+    is_favorite: bool = False
+    worn_at: Optional[datetime] = None
+
+
+class OutfitFeedbackOut(BaseModel):
+    id: str
+    outfit_id: str
+    recommendation_run_id: Optional[str] = None
+    feedback_code: Optional[str] = None
+    is_favorite: bool
+    worn_at: Optional[datetime] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
