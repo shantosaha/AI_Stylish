@@ -1,0 +1,22 @@
+{
+  "name": "ai-stylish-monorepo",
+  "version": "1.0.0",
+  "description": "AI Personal Wardrobe Assistant monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "install:all": "npm install",
+    "build:shared": "npm -w @ai-stylish/shared run build",
+    "build": "npm run build:shared",
+    "dev:mobile": "npm -w mobile run start",
+    "dev:api": "npm -w api run dev || echo 'API dev command not configured yet'",
+    "lint": "npm -w mobile run lint",
+    "test": "echo 'No tests configured yet'"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  }
+}
