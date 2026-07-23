@@ -32,6 +32,10 @@ class UserProfile(Base):
     bio = Column(Text, nullable=True)
     style_preferences = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration
     processing_mode = Column(String(50), default="auto")  # auto, local_preferred, cloud_preferred
+    # In documents/04's canonical DDL (tone_preference text default 'practical') but no
+    # value set is specified anywhere beyond that default - the practical/direct/encouraging
+    # options are designed fresh for Phase 7 and affect only assistant reply phrasing.
+    tone_preference = Column(String(50), default="practical")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -195,6 +199,13 @@ class RecommendationRun(Base):
     main_outfit_id = Column(String(36), ForeignKey("outfits.id", ondelete="SET NULL"), nullable=True)
     alt_1_outfit_id = Column(String(36), ForeignKey("outfits.id", ondelete="SET NULL"), nullable=True)
     alt_2_outfit_id = Column(String(36), ForeignKey("outfits.id", ondelete="SET NULL"), nullable=True)
+    # Not in documents/04's canonical DDL - added so a chat-refined run can be traced back
+    # to the run it refined, since RecommendationRun has no other versioning/lineage field
+    # and refinements always create a new run rather than mutating one (same category of
+    # deviation as CalendarEvent.corrections in Phase 4).
+    refined_from_run_id = Column(
+        String(36), ForeignKey("recommendation_runs.id", ondelete="SET NULL"), nullable=True
+    )
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -223,4 +234,8 @@ class OutfitHistory(Base):
     feedback_code = Column(String(50), nullable=True)  # like, worn, favorite, too_hot, too_cold, ...
     is_favorite = Column(Boolean, default=False)
     worn_at = Column(DateTime, nullable=True)
+    # In documents/04's canonical DDL. Order-independent hash of the referenced outfit's
+    # item-slot ids, computed at feedback-write time - lets future recommendation runs
+    # detect "this exact combo was worn/liked recently" for repeat-avoidance scoring.
+    repeat_group_hash = Column(String(64), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)

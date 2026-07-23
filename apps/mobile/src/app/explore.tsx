@@ -1,4 +1,5 @@
 import { ProcessingMode } from '@ai-stylish/shared';
+import type { TonePreference } from '@ai-stylish/shared';
 import { useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +15,12 @@ const PROCESSING_MODES: { value: ProcessingMode; label: string }[] = [
   { value: ProcessingMode.AUTO, label: 'Automatic' },
   { value: ProcessingMode.LOCAL_PREFERRED, label: 'Local preferred' },
   { value: ProcessingMode.CLOUD_PREFERRED, label: 'Cloud preferred' },
+];
+
+const TONE_OPTIONS: { value: TonePreference; label: string }[] = [
+  { value: 'practical', label: 'Practical' },
+  { value: 'direct', label: 'Direct' },
+  { value: 'encouraging', label: 'Encouraging' },
 ];
 
 export default function ProfileScreen() {
@@ -61,6 +68,10 @@ export default function ProfileScreen() {
     updateProfile({ processing_mode: mode }).catch(() => {});
   };
 
+  const handleSelectTone = (tone: TonePreference) => {
+    updateProfile({ tone_preference: tone }).catch(() => {});
+  };
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -101,6 +112,27 @@ export default function ProfileScreen() {
               testID={`profile-mode-${mode.value}`}>
               <ThemedText type="default">{mode.label}</ThemedText>
               {profile.processing_mode === mode.value ? (
+                <ThemedText type="default" themeColor="text">
+                  ✓
+                </ThemedText>
+              ) : null}
+            </Pressable>
+          ))}
+        </ThemedView>
+
+        <ThemedView type="backgroundElement" style={styles.section}>
+          <ThemedText type="smallBold" themeColor="textSecondary">
+            Assistant tone
+          </ThemedText>
+          {TONE_OPTIONS.map((tone) => (
+            <Pressable
+              key={tone.value}
+              style={styles.modeRow}
+              onPress={() => handleSelectTone(tone.value)}
+              disabled={isLoading}
+              testID={`profile-tone-${tone.value}`}>
+              <ThemedText type="default">{tone.label}</ThemedText>
+              {profile.tone_preference === tone.value ? (
                 <ThemedText type="default" themeColor="text">
                   ✓
                 </ThemedText>

@@ -1,4 +1,4 @@
-import type { Outfit } from '@ai-stylish/shared';
+import type { Outfit, OutfitFeedback, RecommendationRun } from '@ai-stylish/shared';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -6,6 +6,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ContextManagerContent } from '@/components/context/context-manager-content';
+import { HistoryScreen } from '@/components/history/history-screen';
 import { OutfitCard } from '@/components/recommendation/outfit-card';
 import { OutfitDetailScreen } from '@/components/recommendation/outfit-detail-screen';
 import { ThemedText } from '@/components/themed-text';
@@ -38,12 +39,30 @@ export default function HomeScreen() {
     error: recommendationError,
     generateToday,
     submitFeedback,
+    setRun,
   } = useRecommendationStore();
 
   const [showContextManager, setShowContextManager] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const [hasRequestedRecommendation, setHasRequestedRecommendation] = useState(false);
-  const [selectedOutfit, setSelectedOutfit] = useState<{ label: string; outfit: Outfit } | null>(null);
+  const [selectedOutfit, setSelectedOutfit] = useState<{ label: string; outfit: Outfit; runId: string } | null>(
+    null
+  );
+
+  const handleFeedback = (
+    outfit: Outfit,
+    code: OutfitFeedback,
+    options?: { isFavorite?: boolean; wornAt?: string }
+  ) => {
+    if (!token) return;
+    submitFeedback(token, outfit.id, code, options?.isFavorite, options?.wornAt).catch(() => {});
+  };
+
+  const handleRefined = (newRun: RecommendationRun) => {
+    setRun(newRun);
+    setSelectedOutfit(null);
+  };
 
   const hasTop = items.some((i) => i.category === 'tops');
   const hasBottom = items.some((i) => i.category === 'bottoms');
@@ -110,6 +129,18 @@ export default function HomeScreen() {
     );
   }
 
+  if (showHistory) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <HistoryScreen onBack={() => setShowHistory(false)} />
+          </ScrollView>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
   if (selectedOutfit) {
     return (
       <ThemedView style={styles.container}>
@@ -118,7 +149,9 @@ export default function HomeScreen() {
             <OutfitDetailScreen
               label={selectedOutfit.label}
               outfit={selectedOutfit.outfit}
+              runId={selectedOutfit.runId}
               onBack={() => setSelectedOutfit(null)}
+              onRefined={handleRefined}
             />
           </ScrollView>
         </SafeAreaView>
@@ -168,8 +201,10 @@ export default function HomeScreen() {
               <OutfitCard
                 label="Today's pick"
                 outfit={run.main_outfit}
-                onFeedback={(code) => token && submitFeedback(token, run.main_outfit.id, code).catch(() => {})}
-                onViewDetails={() => setSelectedOutfit({ label: "Today's pick", outfit: run.main_outfit })}
+                onFeedback={(code, options) => handleFeedback(run.main_outfit, code, options)}
+                onViewDetails={() =>
+                  setSelectedOutfit({ label: "Today's pick", outfit: run.main_outfit, runId: run.id })
+                }
                 isSubmittingFeedback={isSubmittingFeedback}
                 testID="outfit-main"
               />
@@ -179,20 +214,20 @@ export default function HomeScreen() {
               <OutfitCard
                 label="Alternative 1"
                 outfit={run.alt_outfit_1}
-                onFeedback={(code) =>
-                  token && submitFeedback(token, run.alt_outfit_1.id, code).catch(() => {})
+                onFeedback={(code, options) => handleFeedback(run.alt_outfit_1, code, options)}
+                onViewDetails={() =>
+                  setSelectedOutfit({ label: 'Alternative 1', outfit: run.alt_outfit_1, runId: run.id })
                 }
-                onViewDetails={() => setSelectedOutfit({ label: 'Alternative 1', outfit: run.alt_outfit_1 })}
                 isSubmittingFeedback={isSubmittingFeedback}
                 testID="outfit-alt1"
               />
               <OutfitCard
                 label="Alternative 2"
                 outfit={run.alt_outfit_2}
-                onFeedback={(code) =>
-                  token && submitFeedback(token, run.alt_outfit_2.id, code).catch(() => {})
+                onFeedback={(code, options) => handleFeedback(run.alt_outfit_2, code, options)}
+                onViewDetails={() =>
+                  setSelectedOutfit({ label: 'Alternative 2', outfit: run.alt_outfit_2, runId: run.id })
                 }
-                onViewDetails={() => setSelectedOutfit({ label: 'Alternative 2', outfit: run.alt_outfit_2 })}
                 isSubmittingFeedback={isSubmittingFeedback}
                 testID="outfit-alt2"
               />
@@ -243,6 +278,14 @@ export default function HomeScreen() {
                 {items.length > 0
                   ? `${items.length} item${items.length === 1 ? '' : 's'} in your wardrobe. Tap to manage.`
                   : 'Your wardrobe is empty. Tap to add your first item.'}
+              </ThemedText>
+            </ThemedView>
+          </Pressable>
+
+          <Pressable onPress={() => setShowHistory(true)} testID="home-history-link">
+            <ThemedView type="backgroundElement" style={styles.card}>
+              <ThemedText type="default" themeColor="textSecondary">
+                History — past recommendations, favorites, and worn outfits.
               </ThemedText>
             </ThemedView>
           </Pressable>

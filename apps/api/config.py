@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     weather_cache_ttl_minutes: int = 60
     open_meteo_base_url: str = "https://api.open-meteo.com/v1/forecast"
 
+    repeat_avoidance_window_days: int = 7
+
     class Config:
         env_file = ".env"
 

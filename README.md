@@ -200,6 +200,56 @@ detail view opened off any recommendation card.
   end-to-end via curl and in-browser for combined_card, mannequin, collage, and realistic (the last via
   its required graceful-degradation fallback, never as a dead end)
 
+## Phase 7: History, feedback, assistant
+
+Current status: Complete. Past recommendations are browsable, feedback now feeds back into scoring as a
+repeat-avoidance signal, and a chat assistant can refine a recommendation in place.
+
+- ✅ `GET /history?limit=&offset=` — paginated list of past outfit feedback, each entry expanded to the
+  full outfit (real photos, not just ids); no request/response contract existed in `documents/04` beyond
+  the endpoint name, so this was designed fresh
+- ✅ Repeat-avoidance: `OutfitHistory.repeat_group_hash` (canonical field, previously unused) is now
+  computed at feedback-write time; `context.resolve_recent_signals` looks back 7 days of `worn_at`-only
+  history (a skip or a dislike is never treated as "recently worn") and feeds two soft penalties into
+  `recommender.py` — a per-item recently-worn penalty and an exact-combo-hash repeat penalty — verified
+  by hand-checking a wardrobe's re-recommendation score against the documented penalty constants
+- ✅ `POST /assistant/refine` — a new chat-refinement endpoint with no canonical schema (designed fresh,
+  since `documents/05` frames chat as UI-only): `assistant.py`'s `parse_refinement` does honest keyword
+  matching ("make it warmer"/"more formal"/"use `<item name>`"/"explain") and reports `understood: false`
+  rather than guessing when a message isn't recognized; a recognized refinement re-ranks using the
+  *original* run's frozen weather/formality context (never re-fetched) — this is exactly what "re-ranks
+  without losing context" means — and persists a new `RecommendationRun` linked back via the new
+  `refined_from_run_id` field
+- ✅ `tone_preference` (canonical `user_profiles` column, default `'practical'`, but no value set was
+  specified in either doc beyond that default) — `practical`/`direct`/`encouraging`, designed fresh here,
+  affecting only the assistant's reply phrasing, never scoring or logic
+- ✅ `outfit_serializers.py` extracted (used by 3 routers now: recommendations, history, assistant) and
+  `recommendations.py`'s run-persistence logic extracted into a reusable `persist_recommendation_run`,
+  shared by both the daily-recommendation endpoint and the assistant's refine endpoint
+- ✅ Mobile: a History card on Home opens a full history list (empty state, feedback/favorite/worn
+  badges, and a "Repeat outfit" flag computed client-side by diffing item-id sets — no API change needed);
+  a new Favorite button on every outfit card; "Ask the assistant" from an outfit's detail view opens a
+  quick-prompt + free-text chat thread that, on a successful refinement, collapses both the assistant and
+  detail views back to Home showing the newly refined recommendation (never left open on a stale outfit);
+  a Tone picker on the Profile tab mirrors the existing processing-mode picker exactly
+- ✅ Deliberately out of scope, stated explicitly rather than left as a silent gap: chat history isn't
+  persisted server-side (ephemeral, UI-only, matching how `documents/05` frames it); the assistant's "use
+  `<item>`" directive matches wardrobe item names only, not category synonyms like "sneakers"; History's
+  "repeat this look" and "compare past weeks" actions aren't built; only a Favorite toggle was added
+  to the existing Like/Worn/Skip row, not the other 5 unused `FeedbackCode` values
+- ✅ Verified end-to-end via curl: hand-checked repeat-avoidance scoring math, all 4 assistant directive
+  types (warmer, more formal, use-item, explain) plus the honest unrecognized-message fallback, tone
+  changing only reply phrasing, and pagination
+- ✅ Verified end-to-end in-browser: empty history → worn + favorite feedback → history entry with correct
+  badges and repeat detection → assistant quick-prompt refinement → clean collapse back to Home with the
+  new recommendation → tone picker changes and persists across reload — zero console errors throughout
+
+### Exit Criteria
+- ✅ History view shows past recommendations; refining via chat re-ranks without losing context — verified
+  end-to-end via curl (frozen context_snapshot reuse, confirmed via `refined_from_run_id` lineage) and
+  in-browser (History list renders real past outfits; an assistant refinement produces a new, correctly
+  re-ranked recommendation without re-fetching weather/calendar)
+
 ## Getting Started
 
 ### Install dependencies

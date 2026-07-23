@@ -46,6 +46,9 @@ export const API_ENDPOINTS = {
 
   // History
   HISTORY: '/history',
+
+  // Assistant
+  ASSISTANT_REFINE: '/assistant/refine',
 };
 
 export const PROCESSING_MODE_LABELS = {

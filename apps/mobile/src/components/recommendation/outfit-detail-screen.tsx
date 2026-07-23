@@ -1,9 +1,10 @@
-import type { Outfit, PreviewType } from '@ai-stylish/shared';
+import type { Outfit, PreviewType, RecommendationRun } from '@ai-stylish/shared';
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { resolveMediaUrl } from '@/api/client';
+import { AssistantScreen } from '@/components/recommendation/assistant-screen';
 import { ItemThumbnail } from '@/components/recommendation/outfit-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -22,11 +23,15 @@ const MODES: { type: PreviewType; label: string }[] = [
 export function OutfitDetailScreen({
   label,
   outfit,
+  runId,
   onBack,
+  onRefined,
 }: {
   label: string;
   outfit: Outfit;
+  runId: string;
   onBack: () => void;
+  onRefined: (run: RecommendationRun) => void;
 }) {
   const theme = useTheme();
   const token = useAuthStore((s) => s.token);
@@ -36,6 +41,7 @@ export function OutfitDetailScreen({
   const generate = usePreviewStore((s) => s.generate);
 
   const [mode, setMode] = useState<PreviewType>('combined_card');
+  const [showAssistant, setShowAssistant] = useState(false);
 
   const asset = assetsForOutfit?.[mode];
   const isLoading = loadingKey === `${outfit.id}:${mode}`;
@@ -59,6 +65,17 @@ export function OutfitDetailScreen({
     (item): item is NonNullable<typeof item> => item !== null
   );
 
+  if (showAssistant) {
+    return (
+      <AssistantScreen
+        runId={runId}
+        outfit={outfit}
+        onBack={() => setShowAssistant(false)}
+        onRefined={onRefined}
+      />
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Pressable onPress={onBack} style={styles.backLink} testID="outfit-detail-back">
@@ -68,6 +85,10 @@ export function OutfitDetailScreen({
       <ThemedText type="title" style={styles.title}>
         {label}
       </ThemedText>
+
+      <Pressable onPress={() => setShowAssistant(true)} testID="outfit-detail-ask-assistant">
+        <ThemedText type="linkPrimary">Ask the assistant</ThemedText>
+      </Pressable>
 
       <View style={styles.modeRow}>
         {MODES.map((m) => (

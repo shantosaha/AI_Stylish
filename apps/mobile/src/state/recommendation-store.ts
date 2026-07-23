@@ -14,8 +14,10 @@ interface RecommendationState {
     token: string,
     outfitId: string,
     feedbackCode: OutfitFeedback,
-    isFavorite?: boolean
+    isFavorite?: boolean,
+    wornAt?: string
   ) => Promise<void>;
+  setRun: (run: RecommendationRun) => void;
   clearError: () => void;
 }
 
@@ -43,14 +45,19 @@ export const useRecommendationStore = create<RecommendationState>((set, get) => 
     }
   },
 
-  submitFeedback: async (token, outfitId, feedbackCode, isFavorite) => {
+  submitFeedback: async (token, outfitId, feedbackCode, isFavorite, wornAt) => {
     const { run } = get();
     if (!run) return;
     set({ isSubmittingFeedback: true, error: null });
     try {
       await apiClient.post(
         API_ENDPOINTS.RECOMMENDATIONS_FEEDBACK(run.id),
-        { outfit_id: outfitId, feedback_code: feedbackCode, is_favorite: isFavorite ?? false },
+        {
+          outfit_id: outfitId,
+          feedback_code: feedbackCode,
+          is_favorite: isFavorite ?? false,
+          worn_at: wornAt,
+        },
         token
       );
       set({ isSubmittingFeedback: false });
@@ -62,6 +69,8 @@ export const useRecommendationStore = create<RecommendationState>((set, get) => 
       throw e;
     }
   },
+
+  setRun: (run) => set({ run }),
 
   clearError: () => set({ error: null }),
 }));

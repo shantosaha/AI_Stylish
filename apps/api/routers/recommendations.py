@@ -4,41 +4,87 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 import models
+import recommender
 import schemas
-from context import get_todays_events, resolve_routine_block, resolve_weather
+from context import get_todays_events, resolve_recent_signals, resolve_routine_block, resolve_weather
 from database import get_db
-from recommender import build_outfit_candidates, resolve_target_formality
+from outfit_serializers import outfit_out
 from security import get_current_user
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
 
-def _get_item(item_id: str | None, db: Session) -> models.WardrobeItem | None:
-    if not item_id:
-        return None
-    return db.query(models.WardrobeItem).filter(models.WardrobeItem.id == item_id).first()
+def persist_recommendation_run(
+    current_user: models.User,
+    tops: list,
+    bottoms: list,
+    shoes: list,
+    outerwear: list,
+    temperature: float | None,
+    target_formality: str | None,
+    context_snapshot: dict,
+    db: Session,
+    recently_worn_item_ids: frozenset[str] = frozenset(),
+    recent_repeat_hashes: frozenset[str] = frozenset(),
+    pinned_item_id: str | None = None,
+    refined_from_run_id: str | None = None,
+) -> schemas.RecommendationRunOut:
+    """Builds and persists a new RecommendationRun + its 3 Outfit rows.
 
+    Shared by /recommendations/today (fresh context) and /assistant/refine
+    (reused, frozen context) - the only difference between those two callers
+    is what they pass in here, not how a run gets built and saved.
+    """
+    candidates = recommender.build_outfit_candidates(
+        tops,
+        bottoms,
+        shoes,
+        outerwear,
+        temperature,
+        target_formality,
+        count=3,
+        recently_worn_item_ids=recently_worn_item_ids,
+        recent_repeat_hashes=recent_repeat_hashes,
+        pinned_item_id=pinned_item_id,
+    )
 
-def _outfit_out(outfit: models.Outfit, db: Session) -> schemas.OutfitOut:
-    accessory_ids = json.loads(outfit.accessory_item_ids or "[]")
-    accessories = [
-        item
-        for item in (
-            db.query(models.WardrobeItem).filter(models.WardrobeItem.id.in_(accessory_ids)).all()
-            if accessory_ids
-            else []
+    outfit_rows = []
+    for candidate in candidates:
+        outfit = models.Outfit(
+            user_id=current_user.id,
+            top_item_id=candidate["top_item_id"],
+            bottom_item_id=candidate["bottom_item_id"],
+            outerwear_item_id=candidate["outerwear_item_id"],
+            shoe_item_id=candidate["shoe_item_id"],
+            score=candidate["score"],
+            explanation_tags=json.dumps(candidate["explanation_tags"]),
         )
-    ]
-    return schemas.OutfitOut(
-        id=outfit.id,
-        top=_get_item(outfit.top_item_id, db),
-        bottom=_get_item(outfit.bottom_item_id, db),
-        outerwear=_get_item(outfit.outerwear_item_id, db),
-        shoes=_get_item(outfit.shoe_item_id, db),
-        accessories=accessories,
-        score=outfit.score,
-        explanation_tags=json.loads(outfit.explanation_tags or "[]"),
-        created_at=outfit.created_at,
+        db.add(outfit)
+        outfit_rows.append(outfit)
+    db.flush()  # populate outfit ids before referencing them on the run
+
+    run = models.RecommendationRun(
+        user_id=current_user.id,
+        context_snapshot=json.dumps(context_snapshot, default=str),
+        main_outfit_id=outfit_rows[0].id,
+        alt_1_outfit_id=outfit_rows[1].id,
+        alt_2_outfit_id=outfit_rows[2].id,
+        refined_from_run_id=refined_from_run_id,
+    )
+    db.add(run)
+    db.commit()
+    db.refresh(run)
+    for outfit in outfit_rows:
+        db.refresh(outfit)
+
+    return schemas.RecommendationRunOut(
+        id=run.id,
+        context_snapshot=context_snapshot,
+        main_outfit=outfit_out(outfit_rows[0], db),
+        alt_outfit_1=outfit_out(outfit_rows[1], db),
+        alt_outfit_2=outfit_out(outfit_rows[2], db),
+        refined_from_run_id=run.refined_from_run_id,
+        created_at=run.created_at,
     )
 
 
@@ -72,24 +118,9 @@ def generate_recommendation(
     routine_block = resolve_routine_block(current_user.id, db)
 
     temperature = weather["temperature"] if weather else None
-    target_formality = resolve_target_formality([e.inferred_formality for e in events])
+    target_formality = recommender.resolve_target_formality([e.inferred_formality for e in events])
 
-    candidates = build_outfit_candidates(tops, bottoms, shoes, outerwear, temperature, target_formality, count=3)
-
-    outfit_rows = []
-    for candidate in candidates:
-        outfit = models.Outfit(
-            user_id=current_user.id,
-            top_item_id=candidate["top_item_id"],
-            bottom_item_id=candidate["bottom_item_id"],
-            outerwear_item_id=candidate["outerwear_item_id"],
-            shoe_item_id=candidate["shoe_item_id"],
-            score=candidate["score"],
-            explanation_tags=json.dumps(candidate["explanation_tags"]),
-        )
-        db.add(outfit)
-        outfit_rows.append(outfit)
-    db.flush()  # populate outfit ids before referencing them on the run
+    recent_signals = resolve_recent_signals(current_user.id, db)
 
     context_snapshot = {
         "weather": weather,
@@ -97,26 +128,19 @@ def generate_recommendation(
         "target_formality": target_formality,
         "routine_block": routine_block,
     }
-    run = models.RecommendationRun(
-        user_id=current_user.id,
-        context_snapshot=json.dumps(context_snapshot, default=str),
-        main_outfit_id=outfit_rows[0].id,
-        alt_1_outfit_id=outfit_rows[1].id,
-        alt_2_outfit_id=outfit_rows[2].id,
-    )
-    db.add(run)
-    db.commit()
-    db.refresh(run)
-    for outfit in outfit_rows:
-        db.refresh(outfit)
 
-    return schemas.RecommendationRunOut(
-        id=run.id,
-        context_snapshot=context_snapshot,
-        main_outfit=_outfit_out(outfit_rows[0], db),
-        alt_outfit_1=_outfit_out(outfit_rows[1], db),
-        alt_outfit_2=_outfit_out(outfit_rows[2], db),
-        created_at=run.created_at,
+    return persist_recommendation_run(
+        current_user,
+        tops,
+        bottoms,
+        shoes,
+        outerwear,
+        temperature,
+        target_formality,
+        context_snapshot,
+        db,
+        recently_worn_item_ids=frozenset(recent_signals["recently_worn_item_ids"]),
+        recent_repeat_hashes=frozenset(recent_signals["recent_repeat_hashes"]),
     )
 
 
@@ -144,6 +168,15 @@ def submit_feedback(
             detail="That outfit does not belong to this recommendation run",
         )
 
+    outfit = db.query(models.Outfit).filter(models.Outfit.id == payload.outfit_id).first()
+    repeat_group_hash = (
+        recommender.compute_repeat_group_hash(
+            outfit.top_item_id, outfit.bottom_item_id, outfit.outerwear_item_id, outfit.shoe_item_id
+        )
+        if outfit
+        else None
+    )
+
     history = models.OutfitHistory(
         user_id=current_user.id,
         outfit_id=payload.outfit_id,
@@ -151,6 +184,7 @@ def submit_feedback(
         feedback_code=payload.feedback_code,
         is_favorite=payload.is_favorite,
         worn_at=payload.worn_at,
+        repeat_group_hash=repeat_group_hash,
     )
     db.add(history)
     db.commit()

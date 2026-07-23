@@ -17,6 +17,7 @@ CREATE TABLE user_profiles (
   bio TEXT,
   style_preferences JSONB DEFAULT '{}',
   processing_mode VARCHAR(50) DEFAULT 'auto', -- auto, local_preferred, cloud_preferred
+  tone_preference VARCHAR(50) DEFAULT 'practical', -- practical, direct, encouraging - value set designed in Phase 7, doc only specifies the default
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -168,6 +169,7 @@ CREATE TABLE recommendation_runs (
   main_outfit_id UUID REFERENCES outfits(id) ON DELETE SET NULL,
   alt_1_outfit_id UUID REFERENCES outfits(id) ON DELETE SET NULL,
   alt_2_outfit_id UUID REFERENCES outfits(id) ON DELETE SET NULL,
+  refined_from_run_id UUID REFERENCES recommendation_runs(id) ON DELETE SET NULL, -- not in documents/04; Phase 7 chat-refinement lineage
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_recommendation_runs_user_created ON recommendation_runs(user_id, created_at DESC);
@@ -181,8 +183,10 @@ CREATE TABLE outfit_history (
   feedback_code VARCHAR(50), -- like, worn, favorite, too_hot, too_cold, too_formal, too_casual, not_my_style, skip
   is_favorite BOOLEAN DEFAULT FALSE,
   worn_at TIMESTAMP,
+  repeat_group_hash VARCHAR(64), -- order-independent hash of the outfit's item-slot ids, computed at feedback-write time
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX idx_outfit_history_repeat_hash ON outfit_history(repeat_group_hash);
 
 -- Preview assets (rendered outfit previews). No user_id column, same as
 -- documents/04's canonical DDL - ownership flows through outfit_id.

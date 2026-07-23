@@ -22,6 +22,8 @@ export interface User {
   processing_mode: ProcessingMode;
 }
 
+export type TonePreference = 'practical' | 'direct' | 'encouraging';
+
 export interface UserProfile {
   id: string;
   user_id: string;
@@ -29,6 +31,7 @@ export interface UserProfile {
   bio?: string;
   style_preferences?: Record<string, unknown>;
   processing_mode: ProcessingMode;
+  tone_preference: TonePreference;
   created_at: string;
   updated_at: string;
 }
@@ -184,6 +187,7 @@ export interface RecommendationRun {
   main_outfit: Outfit;
   alt_outfit_1: Outfit;
   alt_outfit_2: Outfit;
+  refined_from_run_id: string | null;
   created_at: string;
 }
 
@@ -225,6 +229,31 @@ export interface OutfitHistory {
   created_at: string;
 }
 
+// GET /history's list-item shape - richer than OutfitHistory above (which
+// matches the write-side OutfitFeedbackOut), embedding the full outfit so
+// the History screen can render real wardrobe photos without a second fetch.
+export interface HistoryEntry {
+  id: string;
+  outfit: Outfit;
+  recommendation_run_id: string | null;
+  feedback_code: OutfitFeedback | null;
+  is_favorite: boolean;
+  worn_at: string | null;
+  created_at: string;
+}
+
+// Assistant DTOs
+export interface AssistantRefineRequest {
+  run_id: string;
+  message: string;
+}
+
+export interface AssistantRefineResponse {
+  reply: string;
+  understood: boolean;
+  run: RecommendationRun | null;
+}
+
 // Request DTOs
 export interface SignupRequest {
   email: string;
@@ -240,6 +269,7 @@ export interface UpdateProfileRequest {
   name?: string;
   bio?: string;
   processing_mode?: ProcessingMode;
+  tone_preference?: TonePreference;
 }
 
 export interface AuthResponse {

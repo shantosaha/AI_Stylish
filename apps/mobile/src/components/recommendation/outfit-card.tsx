@@ -36,7 +36,7 @@ export function OutfitCard({
 }: {
   label: string;
   outfit: Outfit;
-  onFeedback: (feedbackCode: OutfitFeedback) => void;
+  onFeedback: (feedbackCode: OutfitFeedback, options?: { isFavorite?: boolean; wornAt?: string }) => void;
   onViewDetails?: () => void;
   isSubmittingFeedback?: boolean;
   testID?: string;
@@ -46,9 +46,9 @@ export function OutfitCard({
     (item): item is WardrobeItem => item !== null
   );
 
-  const handleFeedback = (code: OutfitFeedback) => {
+  const handleFeedback = (code: OutfitFeedback, options?: { isFavorite?: boolean; wornAt?: string }) => {
     setLastFeedback(code);
-    onFeedback(code);
+    onFeedback(code, options);
   };
 
   return (
@@ -91,10 +91,17 @@ export function OutfitCard({
         </Pressable>
         <Pressable
           style={[styles.feedbackButton, lastFeedback === OutfitFeedback.WORN && styles.feedbackButtonActive]}
-          onPress={() => handleFeedback(OutfitFeedback.WORN)}
+          onPress={() => handleFeedback(OutfitFeedback.WORN, { wornAt: new Date().toISOString() })}
           disabled={isSubmittingFeedback}
           testID={`${testID}-worn`}>
           <ThemedText type="small">Worn it</ThemedText>
+        </Pressable>
+        <Pressable
+          style={[styles.feedbackButton, lastFeedback === OutfitFeedback.FAVORITE && styles.feedbackButtonActive]}
+          onPress={() => handleFeedback(OutfitFeedback.FAVORITE, { isFavorite: true })}
+          disabled={isSubmittingFeedback}
+          testID={`${testID}-favorite`}>
+          <ThemedText type="small">Favorite</ThemedText>
         </Pressable>
         <Pressable
           style={[styles.feedbackButton, lastFeedback === OutfitFeedback.SKIP && styles.feedbackButtonActive]}

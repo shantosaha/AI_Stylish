@@ -8,11 +8,19 @@ explanation_tags so recommendations stay auditable, not a black box.
 This is the seam pattern used throughout the codebase (analyzer.py,
 body_analyzer.py, event_classifier.py, weather.py): plain functions
 returning structured data, swappable/extendable later (e.g. a learned
-per-user preference weight in Phase 7) without changing callers.
+per-user preference weight) without changing callers.
 """
+
+import hashlib
 
 FORMALITY_RANK = {"casual": 0, "business": 1, "formal": 2}
 COLD_THRESHOLD_C = 18.0
+
+# Phase 7 repeat-avoidance: soft nudges on top of the 0.2-0.5 scale above,
+# never hard exclusions - a small wardrobe must still always produce main + 2
+# alternatives.
+RECENTLY_WORN_PENALTY = 0.25
+REPEAT_COMBO_PENALTY = 0.5
 
 
 def resolve_target_formality(event_formalities: list[str | None]) -> str | None:
@@ -28,7 +36,12 @@ def resolve_target_formality(event_formalities: list[str | None]) -> str | None:
     return max(ranked, key=lambda f: FORMALITY_RANK[f])
 
 
-def score_item(item, temperature: float | None, target_formality: str | None) -> tuple[float, list[str]]:
+def score_item(
+    item,
+    temperature: float | None,
+    target_formality: str | None,
+    recently_worn_item_ids: frozenset[str] = frozenset(),
+) -> tuple[float, list[str]]:
     """Scores a single wardrobe item against today's context.
 
     Returns (score, explanation_tags). Base score is 1.0; every adjustment is
@@ -53,13 +66,47 @@ def score_item(item, temperature: float | None, target_formality: str | None) ->
         else:
             score -= 0.2 * distance
 
+    if item.id in recently_worn_item_ids:
+        score -= RECENTLY_WORN_PENALTY
+
     return score, tags
 
 
-def _rank_items(items: list, temperature: float | None, target_formality: str | None) -> list[tuple]:
-    scored = [(item, *score_item(item, temperature, target_formality)) for item in items]
+def _rank_items(
+    items: list,
+    temperature: float | None,
+    target_formality: str | None,
+    recently_worn_item_ids: frozenset[str] = frozenset(),
+) -> list[tuple]:
+    scored = [
+        (item, *score_item(item, temperature, target_formality, recently_worn_item_ids)) for item in items
+    ]
     scored.sort(key=lambda entry: entry[1], reverse=True)
     return scored
+
+
+def _pin_preferred(ranked: list[tuple], preferred_item_id: str | None) -> list[tuple]:
+    """Moves the entry whose item id matches preferred_item_id to the front,
+    so chat's "use <item>" directive always lands it in the top outfit."""
+    if not preferred_item_id:
+        return ranked
+    for i, entry in enumerate(ranked):
+        if entry[0].id == preferred_item_id:
+            return [entry] + ranked[:i] + ranked[i + 1 :]
+    return ranked
+
+
+def compute_repeat_group_hash(
+    top_item_id: str | None,
+    bottom_item_id: str | None,
+    outerwear_item_id: str | None,
+    shoe_item_id: str | None,
+) -> str:
+    """Order-independent hash of an outfit's item-slot ids - the same set of
+    items always hashes the same way regardless of slot order, so repeat
+    detection works even if candidate generation reorders slots later."""
+    ids = sorted(i for i in (top_item_id, bottom_item_id, outerwear_item_id, shoe_item_id) if i)
+    return hashlib.sha256("|".join(ids).encode()).hexdigest()
 
 
 def build_outfit_candidates(
@@ -70,6 +117,9 @@ def build_outfit_candidates(
     temperature: float | None,
     target_formality: str | None,
     count: int = 3,
+    recently_worn_item_ids: frozenset[str] = frozenset(),
+    recent_repeat_hashes: frozenset[str] = frozenset(),
+    pinned_item_id: str | None = None,
 ) -> list[dict]:
     """Builds up to `count` distinct outfit candidates.
 
@@ -82,14 +132,26 @@ def build_outfit_candidates(
 
     Accessories (bags/jewelry) are intentionally not selected here; that's
     deferred past the guaranteed-baseline phase.
+
+    `recently_worn_item_ids`/`recent_repeat_hashes` (Phase 7 repeat-avoidance)
+    and `pinned_item_id` (chat "use <item>" support) are optional and default
+    to no-ops, so every existing caller keeps working unchanged.
     """
     if not tops or not bottoms or not shoes:
         return []
 
-    ranked_tops = _rank_items(tops, temperature, target_formality)
-    ranked_bottoms = _rank_items(bottoms, temperature, target_formality)
-    ranked_shoes = _rank_items(shoes, temperature, target_formality)
-    ranked_outerwear = _rank_items(outerwear, temperature, target_formality) if outerwear else []
+    ranked_tops = _pin_preferred(_rank_items(tops, temperature, target_formality, recently_worn_item_ids), pinned_item_id)
+    ranked_bottoms = _pin_preferred(
+        _rank_items(bottoms, temperature, target_formality, recently_worn_item_ids), pinned_item_id
+    )
+    ranked_shoes = _pin_preferred(
+        _rank_items(shoes, temperature, target_formality, recently_worn_item_ids), pinned_item_id
+    )
+    ranked_outerwear = (
+        _pin_preferred(_rank_items(outerwear, temperature, target_formality, recently_worn_item_ids), pinned_item_id)
+        if outerwear
+        else []
+    )
     wants_outerwear = temperature is not None and temperature < COLD_THRESHOLD_C
 
     candidates = []
@@ -105,13 +167,22 @@ def build_outfit_candidates(
             outerwear_item, outerwear_score, outerwear_tags = ranked_outerwear[min(i, len(ranked_outerwear) - 1)]
 
         tags = list(dict.fromkeys(top_tags + bottom_tags + shoe_tags + outerwear_tags))
+        total_score = top_score + bottom_score + shoe_score + outerwear_score
+
+        combo_hash = compute_repeat_group_hash(
+            top.id, bottom.id, outerwear_item.id if outerwear_item else None, shoe.id
+        )
+        if combo_hash in recent_repeat_hashes:
+            total_score -= REPEAT_COMBO_PENALTY
+            tags.append("You wore this exact combo recently")
+
         candidates.append(
             {
                 "top_item_id": top.id,
                 "bottom_item_id": bottom.id,
                 "shoe_item_id": shoe.id,
                 "outerwear_item_id": outerwear_item.id if outerwear_item else None,
-                "score": top_score + bottom_score + shoe_score + outerwear_score,
+                "score": total_score,
                 "explanation_tags": tags,
             }
         )

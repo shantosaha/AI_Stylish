@@ -8,6 +8,7 @@ WardrobeCategory = Literal[
     "tops", "bottoms", "outerwear", "shoes", "accessories", "bags", "jewelry"
 ]
 Formality = Literal["casual", "business", "formal"]
+TonePreference = Literal["practical", "direct", "encouraging"]
 
 
 class SignupRequest(BaseModel):
@@ -42,6 +43,7 @@ class UserProfileOut(BaseModel):
     name: Optional[str] = None
     bio: Optional[str] = None
     processing_mode: ProcessingMode
+    tone_preference: TonePreference
     created_at: datetime
     updated_at: datetime
 
@@ -53,6 +55,7 @@ class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
     bio: Optional[str] = None
     processing_mode: Optional[ProcessingMode] = None
+    tone_preference: Optional[TonePreference] = None
 
 
 class WardrobeImageOut(BaseModel):
@@ -234,6 +237,7 @@ class RecommendationRunOut(BaseModel):
     main_outfit: OutfitOut
     alt_outfit_1: OutfitOut
     alt_outfit_2: OutfitOut
+    refined_from_run_id: Optional[str] = None
     created_at: datetime
 
 
@@ -280,3 +284,24 @@ class PreviewAssetOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class HistoryEntryOut(BaseModel):
+    id: str
+    outfit: OutfitOut
+    recommendation_run_id: Optional[str] = None
+    feedback_code: Optional[FeedbackCode] = None
+    is_favorite: bool
+    worn_at: Optional[datetime] = None
+    created_at: datetime
+
+
+class AssistantRefineRequest(BaseModel):
+    run_id: str
+    message: str = Field(min_length=1, max_length=500)
+
+
+class AssistantRefineResponse(BaseModel):
+    reply: str
+    understood: bool
+    run: Optional[RecommendationRunOut] = None
