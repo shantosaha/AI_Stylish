@@ -15,6 +15,13 @@ class Settings(BaseSettings):
 
     repeat_avoidance_window_days: int = 7
 
+    # AI Provider Router (Phase 9): unset by default - cloud_preferred/auto
+    # gracefully fall back to the local seam functions when no key is
+    # configured, exactly like every other cloud-optional path in this app
+    # (weather provider failures, realistic preview). Never required.
+    anthropic_api_key: str | None = None
+    anthropic_model: str = "claude-sonnet-5"
+
     class Config:
         env_file = ".env"
 

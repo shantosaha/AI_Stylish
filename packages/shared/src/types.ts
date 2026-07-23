@@ -178,6 +178,7 @@ export interface Outfit {
   accessories: WardrobeItem[];
   score: number;
   explanation_tags: string[];
+  cloud_explanation: string | null;
   created_at: string;
 }
 

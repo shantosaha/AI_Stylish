@@ -3,6 +3,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+import ai_provider
 import models
 import recommender
 import schemas
@@ -10,6 +11,29 @@ from context import get_todays_events, resolve_recent_signals, resolve_routine_b
 from database import get_db
 from outfit_serializers import outfit_out
 from security import get_current_user
+
+
+def _summarize_outfit(candidate: dict, tops, bottoms, shoes, outerwear) -> str:
+    """Plain-text item-name summary for the cloud prompt only - never stored,
+    never shown to the user; the persisted, user-facing explanation stays the
+    deterministic explanation_tags (plus cloud_explanation as an addition)."""
+    by_id = {i.id: i.name for i in [*tops, *bottoms, *shoes, *outerwear]}
+    parts = []
+    for slot in ("top_item_id", "bottom_item_id", "outerwear_item_id", "shoe_item_id"):
+        item_id = candidate.get(slot)
+        if item_id and item_id in by_id:
+            parts.append(by_id[item_id])
+    return ", ".join(parts) if parts else "no items selected"
+
+
+def _summarize_context(context_snapshot: dict) -> str:
+    weather = context_snapshot.get("weather")
+    temperature = weather["temperature"] if weather else "unknown"
+    return (
+        f"temperature {temperature}, "
+        f"target formality {context_snapshot.get('target_formality')}, "
+        f"time of day {context_snapshot.get('routine_block')}"
+    )
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
@@ -61,6 +85,18 @@ def persist_recommendation_run(
         )
         db.add(outfit)
         outfit_rows.append(outfit)
+
+    # AI Provider Router (Phase 9): only the main (winning) outfit gets a
+    # cloud explanation attempt - alternatives never do, keeping this a
+    # cheap, bounded addition rather than N cloud calls per run. Resolves to
+    # "local" (no-op) for local_preferred always, and for cloud_preferred/auto
+    # whenever no provider is configured or the call fails for any reason.
+    processing_mode = current_user.profile.processing_mode if current_user.profile else "auto"
+    if ai_provider.resolve_provider(processing_mode) == "cloud":
+        outfit_summary = _summarize_outfit(candidates[0], tops, bottoms, shoes, outerwear)
+        context_summary = _summarize_context(context_snapshot)
+        outfit_rows[0].cloud_explanation = ai_provider.generate_cloud_explanation(outfit_summary, context_summary)
+
     db.flush()  # populate outfit ids before referencing them on the run
 
     run = models.RecommendationRun(

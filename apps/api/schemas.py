@@ -247,6 +247,7 @@ class OutfitOut(BaseModel):
     accessories: list[WardrobeItemOut] = []
     score: float
     explanation_tags: list[str] = []
+    cloud_explanation: Optional[str] = None
     created_at: datetime
 
 

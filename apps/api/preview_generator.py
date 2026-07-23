@@ -16,6 +16,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+import ai_provider
+
 CANVAS_SIZE = (480, 640)
 _BACKGROUND = (240, 240, 242, 255)
 _SILHOUETTE = (210, 210, 215, 255)
@@ -92,15 +94,32 @@ def compose_collage(item_paths: dict[str, str | None], body_photo_path: str | No
     return canvas
 
 
-def compose_realistic() -> dict:
-    """Enhancement-only mode. No cloud realistic-preview provider is wired
-    yet - IMPLEMENTATION_PLAN.md #8 defers that decision to Phase 9. Always
-    reports failed-with-reason rather than fabricating an image, so callers
-    fall back to collage/mannequin per CLAUDE.md's degrade-gracefully rule."""
+def compose_realistic(processing_mode: str) -> dict:
+    """Enhancement-only mode. Phase 9 resolves IMPLEMENTATION_PLAN.md #8's
+    open decision: diffusion-based photorealistic image generation stays
+    permanently out of v1 scope (a real image model is a materially
+    different, much heavier integration than the AI Provider Router's text
+    seam built this phase) - this always reports failed-with-reason rather
+    than fabricating an image, so callers fall back to collage/mannequin per
+    CLAUDE.md's degrade-gracefully rule. The reason string is mode-aware so
+    the user understands *why*, distinguishing three cases: their own
+    processing_mode choice, a missing provider configuration, and the
+    permanent scope decision - never a single generic message."""
+    if processing_mode == "local_preferred":
+        reason = (
+            "Realistic AI preview requires cloud-preferred or auto mode. Showing the collage preview instead."
+        )
+    elif not ai_provider.is_cloud_available():
+        reason = (
+            "Realistic AI preview requires a configured cloud provider. Showing the collage preview instead."
+        )
+    else:
+        reason = (
+            "Realistic AI image generation is not part of this app - only the deterministic collage and "
+            "mannequin previews render real images. Showing the collage preview instead."
+        )
     return {
         "status": "failed",
         "local_uri": None,
-        "metadata": {
-            "reason": "Realistic AI preview is not yet available. Showing the collage preview instead."
-        },
+        "metadata": {"reason": reason},
     }

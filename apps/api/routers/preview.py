@@ -99,7 +99,8 @@ def generate_preview(
         result: dict = {"status": "ready", "local_uri": None, "metadata": {}}
 
     elif payload.preview_type == "realistic":
-        result = compose_realistic()
+        processing_mode = current_user.profile.processing_mode if current_user.profile else "auto"
+        result = compose_realistic(processing_mode)
 
     else:
         item_paths = {

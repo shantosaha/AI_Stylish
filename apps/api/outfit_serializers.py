@@ -33,5 +33,6 @@ def outfit_out(outfit: models.Outfit, db: Session) -> schemas.OutfitOut:
         accessories=accessories,
         score=outfit.score,
         explanation_tags=json.loads(outfit.explanation_tags or "[]"),
+        cloud_explanation=outfit.cloud_explanation,
         created_at=outfit.created_at,
     )

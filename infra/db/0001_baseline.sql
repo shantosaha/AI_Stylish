@@ -157,6 +157,11 @@ CREATE TABLE outfits (
   accessory_item_ids_json JSONB NOT NULL DEFAULT '[]', -- always empty through Phase 6
   score NUMERIC(7,2) DEFAULT 0.0,
   explanation_tags_json JSONB NOT NULL DEFAULT '[]',
+  -- Not in documents/04's canonical DDL. Phase 9: a richer, natural-language
+  -- styling note from the AI Provider Router's cloud path, additive to
+  -- explanation_tags_json (never a replacement) - null whenever
+  -- cloud_preferred/auto resolves to local, or the call fails for any reason.
+  cloud_explanation TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_outfits_user_created ON outfits(user_id, created_at DESC);

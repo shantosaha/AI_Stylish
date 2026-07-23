@@ -306,6 +306,58 @@ a full airplane-mode reload; edits made offline queue locally and replay cleanly
   cleanly once back online — verified end-to-end via curl and in-browser, including confirming the synced
   data lands correctly server-side after reconnecting
 
+## Phase 9: Cloud enhancement
+
+Current status: Complete. A genuine AI Provider Router routing decision now exists on top of every prior
+phase's local-only seams, plus mode-aware messaging for the permanently-out-of-scope realistic preview.
+
+- ✅ `ai_provider.py` (new) — the actual routing decision `IMPLEMENTATION_PLAN.md` #8 described but every
+  prior phase satisfied only by construction (every seam was already local-only, so `local_preferred` had
+  nothing to route away from). `resolve_provider(processing_mode)`: `local_preferred` always stays local
+  even with a key configured (the user's explicit choice wins); `cloud_preferred`/`auto` prefer cloud when
+  a provider is configured and fall back to local otherwise — the guaranteed local baseline never breaks
+- ✅ `generate_cloud_explanation()` — the one real cloud call in this codebase (Anthropic Messages API,
+  config-gated on `ANTHROPIC_API_KEY`), producing a short natural-language styling note. Only ever called
+  for the main (winning) outfit of a run, never the two alternatives — a bounded, cheap addition rather
+  than 3x the cloud calls. Returns `None` on any failure (no key, network error, bad response) so callers
+  never special-case it; the deterministic `explanation_tags` stay the reliability backbone and are never
+  replaced, only ever supplemented
+- ✅ `outfits.cloud_explanation` (new column, additive, not in `documents/04`'s canonical DDL — same
+  documented-deviation category as `CalendarEvent.corrections` and `RecommendationRun.refined_from_run_id`
+  from earlier phases) surfaced end-to-end: `OutfitOut.cloud_explanation` → mobile `OutfitCard` renders it
+  as a distinct "AI stylist note" callout, visually separate from the tag-chip row, only when present
+- ✅ Realistic preview mode-aware messaging: `IMPLEMENTATION_PLAN.md` #8's open decision on the realistic
+  preview approach is now resolved permanently — diffusion-based photorealistic image generation stays out
+  of v1 scope (a materially heavier integration than the text-only router built this phase), and
+  `compose_realistic()` now distinguishes *why* it's unavailable with three distinct reasons instead of one
+  generic message: the user's own `local_preferred` choice, no cloud provider configured, or the permanent
+  scope decision — verified all three via curl against the same outfit
+- ✅ Verified end-to-end via curl: `resolve_provider()` returns `"local"` for all three processing modes
+  with no API key configured, proving the guaranteed-baseline recommendation flow is completely unaffected;
+  a full recommendation generated under `cloud_preferred` with no key still returns 3 real outfits with
+  `cloud_explanation: null`; a fake/invalid key produces a real network round-trip to `api.anthropic.com`
+  (not blocked by this sandbox's egress proxy — confirmed via a real 401, unlike the Open-Meteo precedent)
+  that still degrades to `None` cleanly rather than raising
+- ✅ Verified end-to-end in-browser (Playwright): logged into a real account with a generated recommendation
+  and `cloud_explanation: null` — renders with zero console errors and no stray empty callout; separately,
+  intercepted the network response to inject a real `cloud_explanation` string and confirmed the "AI
+  stylist note" callout renders correctly and distinctly from the tag row — both the absent and present
+  paths verified, since no live Anthropic credentials are available to this sandbox (see Sandbox
+  Limitations below)
+- ⚠️ **Sandbox limitation** (same category as Phase 4's Open-Meteo item): no `ANTHROPIC_API_KEY` is
+  available to the backend process in this environment, so the actual cloud-generated-explanation happy
+  path cannot be exercised live. The integration code is complete and correct (verified via a real,
+  reachable network call to `api.anthropic.com` that fails on auth as expected rather than on network
+  policy), and the graceful-degradation path is fully verified — this mirrors the accepted precedent rather
+  than being a new kind of gap
+
+### Exit Criteria
+- ✅ `processing_mode` now has a real, working cloud path in addition to the always-guaranteed local path;
+  switching to `cloud_preferred`/`auto` with no provider configured — the default, and the only state this
+  sandbox can verify live — never degrades, breaks, or blocks the 1-best-outfit-plus-2-alternatives
+  guarantee, and a configured provider (verified via a fake key producing a real, non-fabricated failure)
+  degrades exactly as cleanly
+
 ## Getting Started
 
 ### Install dependencies

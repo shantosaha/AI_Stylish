@@ -75,6 +75,15 @@ export function OutfitCard({
         </View>
       ) : null}
 
+      {outfit.cloud_explanation ? (
+        <View style={styles.cloudNote} testID={testID ? `${testID}-cloud-note` : undefined}>
+          <ThemedText type="smallBold" themeColor="textSecondary">
+            AI stylist note
+          </ThemedText>
+          <ThemedText type="small">{outfit.cloud_explanation}</ThemedText>
+        </View>
+      ) : null}
+
       {onViewDetails ? (
         <Pressable onPress={onViewDetails} testID={`${testID}-view-details`}>
           <ThemedText type="linkPrimary">View preview modes</ThemedText>
@@ -150,6 +159,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
     backgroundColor: '#ffffff10',
+  },
+  cloudNote: {
+    borderRadius: Spacing.two,
+    padding: Spacing.two,
+    gap: Spacing.half,
+    backgroundColor: '#2563eb1a',
   },
   feedbackRow: {
     flexDirection: 'row',

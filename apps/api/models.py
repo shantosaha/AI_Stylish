@@ -187,6 +187,11 @@ class Outfit(Base):
     accessory_item_ids = Column(Text, default="[]")  # JSON-encoded array of wardrobe_item ids
     score = Column(Float, default=0.0)
     explanation_tags = Column(Text, default="[]")  # JSON-encoded array of strings
+    # Not in documents/04's canonical DDL. Phase 9: a richer, natural-language
+    # styling note from the cloud provider, additive to explanation_tags
+    # (never a replacement) - null whenever cloud_preferred/auto resolves to
+    # local, or the call fails for any reason.
+    cloud_explanation = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
