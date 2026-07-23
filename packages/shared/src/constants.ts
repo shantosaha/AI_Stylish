@@ -26,6 +26,16 @@ export const API_ENDPOINTS = {
   // Context
   CONTEXT_TODAY: '/context/today',
 
+  // Calendar events
+  CALENDAR_EVENTS_SYNC: '/calendar-events/sync',
+  CALENDAR_EVENTS_TODAY: '/calendar-events/today',
+  CALENDAR_EVENT_UPDATE: (id: string) => `/calendar-events/${id}`,
+  CALENDAR_EVENT_DELETE: (id: string) => `/calendar-events/${id}`,
+
+  // Routines
+  ROUTINES: '/routines',
+  ROUTINE_DELETE: (id: string) => `/routines/${id}`,
+
   // Recommendations
   RECOMMENDATIONS_TODAY: '/recommendations/today',
   RECOMMENDATIONS_GET: (id: string) => `/recommendations/${id}`,

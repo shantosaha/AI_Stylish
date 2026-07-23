@@ -92,29 +92,74 @@ export interface UpdateBodyAnalysisRequest {
 }
 
 // Context DTOs
+export type TimeBlock = 'morning' | 'workday' | 'evening' | 'night';
+export type EventSource = 'device_calendar' | 'manual';
+
 export interface WeatherData {
   temperature: number;
   condition: string;
   humidity: number;
   wind_speed: number;
-  timestamp: string;
+  fetched_at: string;
+  is_stale: boolean;
 }
 
 export interface CalendarEvent {
   id: string;
+  source: EventSource;
+  external_id: string | null;
   title: string;
-  start_time: string;
-  end_time: string;
-  location?: string;
-  formality_level?: 'casual' | 'business' | 'formal' | 'black-tie';
+  start_ts: string;
+  end_ts: string | null;
+  location: string | null;
+  inferred_event_type: string | null;
+  inferred_formality: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ContextSnapshot {
   timestamp: string;
-  weather: WeatherData;
+  weather: WeatherData | null;
   events: CalendarEvent[];
-  routine_block?: string;
+  routine_block: string;
+  location_provided: boolean;
+}
+
+export interface RoutineBlock {
+  id: string;
+  name: string;
+  recurrence_rule: string;
+  time_block: TimeBlock | null;
+  default_event_type: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface CalendarEventSyncItem {
+  source: EventSource;
+  external_id?: string;
+  title: string;
+  start_ts: string;
+  end_ts?: string;
   location?: string;
+}
+
+export interface UpdateCalendarEventRequest {
+  title?: string;
+  start_ts?: string;
+  end_ts?: string;
+  location?: string;
+  inferred_event_type?: string;
+  inferred_formality?: string;
+}
+
+export interface CreateRoutineRequest {
+  name: string;
+  recurrence_rule: string;
+  time_block?: TimeBlock;
+  default_event_type?: string;
+  notes?: string;
 }
 
 // Recommendation DTOs

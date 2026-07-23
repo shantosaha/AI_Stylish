@@ -130,3 +130,84 @@ class BodyAnalysisUpdate(BaseModel):
     skin_tone: Optional[str] = None
     face_shape: Optional[str] = None
     height: Optional[str] = None
+
+
+TimeBlock = Literal["morning", "workday", "evening", "night"]
+EventSource = Literal["device_calendar", "manual"]
+
+
+class CalendarEventOut(BaseModel):
+    id: str
+    source: str
+    external_id: Optional[str] = None
+    title: str
+    start_ts: datetime
+    end_ts: Optional[datetime] = None
+    location: Optional[str] = None
+    inferred_event_type: Optional[str] = None
+    inferred_formality: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CalendarEventSyncItem(BaseModel):
+    source: EventSource
+    external_id: Optional[str] = None
+    title: str
+    start_ts: datetime
+    end_ts: Optional[datetime] = None
+    location: Optional[str] = None
+
+
+class CalendarEventSyncRequest(BaseModel):
+    events: list[CalendarEventSyncItem]
+
+
+class CalendarEventUpdate(BaseModel):
+    title: Optional[str] = None
+    start_ts: Optional[datetime] = None
+    end_ts: Optional[datetime] = None
+    location: Optional[str] = None
+    inferred_event_type: Optional[str] = None
+    inferred_formality: Optional[str] = None
+
+
+class RoutineOut(BaseModel):
+    id: str
+    name: str
+    recurrence_rule: str
+    time_block: Optional[TimeBlock] = None
+    default_event_type: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RoutineCreate(BaseModel):
+    name: str
+    recurrence_rule: str
+    time_block: Optional[TimeBlock] = None
+    default_event_type: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class WeatherOut(BaseModel):
+    temperature: float
+    condition: str
+    humidity: float
+    wind_speed: float
+    fetched_at: datetime
+    is_stale: bool
+
+
+class ContextTodayOut(BaseModel):
+    timestamp: datetime
+    weather: Optional[WeatherOut] = None
+    events: list[CalendarEventOut] = []
+    routine_block: str
+    location_provided: bool

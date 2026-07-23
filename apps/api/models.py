@@ -117,3 +117,48 @@ class ItemAnalysisResult(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     item = relationship("WardrobeItem", back_populates="analysis")
+
+
+class CalendarEvent(Base):
+    __tablename__ = "calendar_events"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    source = Column(String(50), nullable=False, default="device_calendar")  # device_calendar, manual
+    external_id = Column(String(255), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    start_ts = Column(DateTime, nullable=False, index=True)
+    end_ts = Column(DateTime, nullable=True)
+    location = Column(String(255), nullable=True)
+    inferred_event_type = Column(String(50), nullable=True)
+    inferred_formality = Column(String(50), nullable=True)
+    context_json = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration
+    # Not in documents/04's canonical DDL; added to satisfy the corrections-audit
+    # convention already required for every other AI-inferred field in this codebase.
+    corrections = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Routine(Base):
+    __tablename__ = "routines"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    recurrence_rule = Column(String(255), nullable=False)  # free-text descriptor, never parsed
+    time_block = Column(String(50), nullable=True)  # morning, workday, evening, night
+    default_event_type = Column(String(50), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class WeatherCache(Base):
+    __tablename__ = "weather_cache"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    location_hash = Column(String(64), nullable=False, index=True)
+    fetched_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    forecast_json = Column(Text, default="{}")  # JSON-encoded; JSONB in Postgres migration

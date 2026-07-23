@@ -92,6 +92,56 @@ CREATE TABLE item_analysis_results (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Phase 4: Context engine
+-- NOTE: keyed on user_id -> users.id (not user_profile_id -> user_profiles.id)
+-- for consistency with every other table in this schema; documents/04's
+-- canonical DDL uses user_profile_id, but the established convention in this
+-- codebase (see the sync_queue note above) is user_id. Table/column names
+-- otherwise match documents/04 verbatim.
+CREATE TABLE calendar_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  source VARCHAR(50) NOT NULL DEFAULT 'device_calendar', -- device_calendar, manual
+  external_id VARCHAR(255),
+  title VARCHAR(255) NOT NULL,
+  start_ts TIMESTAMP NOT NULL,
+  end_ts TIMESTAMP,
+  location VARCHAR(255),
+  inferred_event_type VARCHAR(50),
+  inferred_formality VARCHAR(50),
+  context_json JSONB DEFAULT '{}',
+  corrections JSONB DEFAULT '{}', -- not in documents/04 canonical DDL; added for the
+                                   -- corrections-audit pattern used on every other
+                                   -- AI-inferred field in this codebase
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_calendar_events_user_time ON calendar_events(user_id, start_ts);
+
+-- recurrence_rule is free text and intentionally never parsed - routine
+-- applicability is decided purely by time_block matching the current
+-- computed block (see apps/api/context.py resolve_time_block).
+CREATE TABLE routines (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  recurrence_rule VARCHAR(255) NOT NULL,
+  time_block VARCHAR(50), -- morning, workday, evening, night
+  default_event_type VARCHAR(50),
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE weather_cache (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  location_hash VARCHAR(64) NOT NULL, -- rounded "lat,lon" string, not a cryptographic hash
+  fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP,
+  forecast_json JSONB DEFAULT '{}'
+);
+CREATE INDEX idx_weather_cache_user_fetch ON weather_cache(user_id, fetched_at DESC);
+
 -- Outfits (combinations of wardrobe items)
 CREATE TABLE outfits (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

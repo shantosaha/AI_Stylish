@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
     debug: bool = True
 
+    weather_cache_ttl_minutes: int = 60
+    open_meteo_base_url: str = "https://api.open-meteo.com/v1/forecast"
+
     class Config:
         env_file = ".env"
 
