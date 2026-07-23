@@ -28,6 +28,7 @@ export interface UserProfile {
   name?: string;
   bio?: string;
   style_preferences?: Record<string, unknown>;
+  processing_mode: ProcessingMode;
   created_at: string;
   updated_at: string;
 }
@@ -169,6 +170,12 @@ export interface SignupRequest {
 export interface LoginRequest {
   email: string;
   password: string;
+}
+
+export interface UpdateProfileRequest {
+  name?: string;
+  bio?: string;
+  processing_mode?: ProcessingMode;
 }
 
 export interface AuthResponse {

@@ -40,5 +40,9 @@ wheels/
 # Logs
 *.log
 
+# Local SQLite database
+*.db
+*.db-journal
+
 # Poetry
 poetry.lock

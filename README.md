@@ -32,6 +32,19 @@ Current status: Scaffolding complete. The following components are in place:
 - ✅ App boots on iOS/Android/Web simulators (Expo Router configured)
 - ✅ API `/health` endpoint returns 200 OK (verified with health check)
 
+## Phase 1: Foundation
+
+Current status: Complete. Auth, profile, and core navigation work end-to-end.
+
+- ✅ Auth endpoints (`POST /auth/signup`, `POST /auth/login`) backed by hashed passwords + JWT
+- ✅ `GET/PUT /profile` — one `user_profiles` row per account, with `processing_mode` as a first-class field
+- ✅ Mobile auth flow (login/signup screens, session persisted via SecureStore/localStorage, auto-rehydration on launch)
+- ✅ Home tab (empty-state wardrobe placeholder) and Profile tab (editable name + AI processing mode + logout)
+- ✅ Loading, error, and empty states for the auth/profile epic
+
+### Exit Criteria
+- ✅ A user can sign up, log in, and see an empty Home/Profile screen on a fresh install (verified end-to-end in-browser)
+
 ## Getting Started
 
 ### Install dependencies
@@ -65,8 +78,13 @@ python main.py
 
 Visit `http://localhost:8000/health` to verify the API is running.
 
+Set `EXPO_PUBLIC_API_URL` (defaults to `http://localhost:8000`) when starting the mobile app if the API runs elsewhere, e.g.:
+```bash
+EXPO_PUBLIC_API_URL=http://localhost:8000 npm run dev:mobile
+```
+
 ## Next Phase
 
-**Phase 1: Foundation** — Auth (signup/login), user profile creation, basic navigation setup.
+**Phase 2: Wardrobe & vision** — Wardrobe CRUD, image upload, auto clothing detection + tag proposal, manual correction UI.
 
 See `IMPLEMENTATION_PLAN.md` §4 for the full phased roadmap and exit criteria for each phase.

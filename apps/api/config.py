@@ -2,8 +2,12 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql://user:password@localhost:5432/ai_stylish"
+    # Defaults to local SQLite so the API runs standalone without a live
+    # Postgres/Supabase connection; set DATABASE_URL to a postgresql:// URL
+    # (e.g. Supabase connection string) in production.
+    database_url: str = "sqlite:///./ai_stylish.db"
     secret_key: str = "your-secret-key-change-in-production"
+    access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
     debug: bool = True
 
     class Config:

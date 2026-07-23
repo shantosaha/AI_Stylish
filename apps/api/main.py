@@ -1,6 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import models
+from database import Base, engine
+from routers import auth, profile
+
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="AI Personal Wardrobe Assistant API",
     description="Backend API for the AI Personal Wardrobe Assistant",
@@ -15,6 +21,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
+app.include_router(profile.router)
 
 
 @app.get("/health")

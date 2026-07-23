@@ -3,7 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
-    "@ai-stylish/shared": "workspace:*",
+    "@ai-stylish/shared": "^1.0.0",
     "@expo/ui": "~57.0.7",
     "expo": "~57.0.8",
     "expo-constants": "~57.0.7",
@@ -13,6 +13,7 @@
     "expo-image": "~57.0.1",
     "expo-linking": "~57.0.4",
     "expo-router": "~57.0.8",
+    "expo-secure-store": "~57.0.1",
     "expo-splash-screen": "~57.0.5",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.1",
@@ -30,7 +31,7 @@
     "zustand": "^4.4.0"
   },
   "devDependencies": {
-    "@types/react": "~19.2.2",
+    "@types/react": "19.2.3",
     "typescript": "~6.0.3"
   },
   "scripts": {
